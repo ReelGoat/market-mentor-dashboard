@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { EconomicEvent, FilterOptions } from '@/types';
@@ -18,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from '@/lib/utils';
-import { Skeleton } from "@/components/ui/skeleton";
+import CalendarLoading from './CalendarLoading';
 
 interface EconomicCalendarProps {
   events: EconomicEvent[];
@@ -96,30 +97,6 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
       };
     });
   };
-
-  const renderLoadingSkeleton = () => (
-    <div className="space-y-4">
-      {[1, 2, 3].map(i => (
-        <div key={i} className="animate-pulse">
-          <Skeleton className="h-6 w-64 mb-2" />
-          <div className="rounded-md border border-border">
-            <div className="h-10 bg-secondary/50" />
-            {[1, 2, 3].map(j => (
-              <div key={j} className="flex border-t border-border p-3">
-                <Skeleton className="h-6 w-16" />
-                <Skeleton className="h-6 w-12 ml-4" />
-                <Skeleton className="h-6 w-48 ml-4 flex-grow" />
-                <Skeleton className="h-6 w-16 ml-4" />
-                <Skeleton className="h-6 w-16 ml-4" />
-                <Skeleton className="h-6 w-16 ml-4" />
-                <Skeleton className="h-6 w-16 ml-4" />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 
   return (
     <Card className="bg-cardDark border-border">
@@ -243,7 +220,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
       </CardHeader>
       <CardContent className="pb-4">
         {isLoading ? (
-          renderLoadingSkeleton()
+          <CalendarLoading />
         ) : Object.keys(groupedEvents).length > 0 ? (
           <div className="space-y-4">
             {Object.keys(groupedEvents)

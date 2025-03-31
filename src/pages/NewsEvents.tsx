@@ -17,16 +17,17 @@ const NewsEvents: React.FC = () => {
     staleTime: 1000 * 60 * 60, // 1 hour
     retry: 1,
     gcTime: 1000 * 60 * 30, // 30 minutes
-    meta: {
-      onError: (error: Error) => {
-        console.error('Error fetching economic events:', error);
-        toast.error('Failed to load economic events. Using mock data instead.');
-      }
-    }
   });
 
-  // Fallback to mock data if there's an error
-  const events = error ? generateMockEvents() : economicEvents || [];
+  // Handle errors and use mock data as fallback
+  const events = React.useMemo(() => {
+    if (error) {
+      console.error('Error fetching economic events:', error);
+      toast.error('Failed to load economic events. Using mock data instead.');
+      return generateMockEvents();
+    }
+    return economicEvents || [];
+  }, [economicEvents, error]);
 
   return (
     <MainLayout>
