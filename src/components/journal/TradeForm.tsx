@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Trade } from '@/types';
@@ -15,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowUpDown, Save, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TradeFormProps {
   selectedDate: Date;
@@ -38,7 +38,6 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const [screenshot, setScreenshot] = useState<string | undefined>(editTrade?.screenshot);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
-  // Calculate P&L whenever entry, exit or lot size changes
   useEffect(() => {
     if (entryPrice && exitPrice && lotSize) {
       const entry = parseFloat(entryPrice);
@@ -46,8 +45,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
       const size = parseFloat(lotSize);
       
       if (!isNaN(entry) && !isNaN(exit) && !isNaN(size)) {
-        // Simple P&L calculation, can be adjusted based on instrument
-        const calculatedPnl = (exit - entry) * size * 100; // Multiply by 100 for easier readability
+        const calculatedPnl = (exit - entry) * size * 100;
         setPnl(parseFloat(calculatedPnl.toFixed(2)));
       }
     }
@@ -56,7 +54,6 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
     const newErrors: {[key: string]: string} = {};
     
     if (!symbol) newErrors.symbol = "Symbol is required";
