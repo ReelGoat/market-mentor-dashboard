@@ -14,12 +14,14 @@ const NewsEvents: React.FC = () => {
   const { data: economicEvents, isLoading, error, refetch } = useQuery({
     queryKey: ['economicEvents'],
     queryFn: fetchEconomicEvents,
-    onError: (err) => {
-      console.error('Error fetching economic events:', err);
-      toast.error('Failed to load economic events. Using mock data instead.');
-      return generateMockEvents();
-    },
     staleTime: 1000 * 60 * 60, // 1 hour
+    retry: 1,
+    onSettled: (data, error) => {
+      if (error) {
+        console.error('Error fetching economic events:', error);
+        toast.error('Failed to load economic events. Using mock data instead.');
+      }
+    }
   });
 
   // Fallback to mock data if there's an error
