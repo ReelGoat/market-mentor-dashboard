@@ -16,8 +16,9 @@ const NewsEvents: React.FC = () => {
     queryFn: fetchEconomicEvents,
     staleTime: 1000 * 60 * 60, // 1 hour
     retry: 1,
-    onSettled: (data, error) => {
-      if (error) {
+    gcTime: 1000 * 60 * 30, // 30 minutes
+    meta: {
+      onError: (error: Error) => {
         console.error('Error fetching economic events:', error);
         toast.error('Failed to load economic events. Using mock data instead.');
       }
