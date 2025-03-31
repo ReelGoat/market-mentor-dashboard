@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { EconomicEvent, FilterOptions } from '@/types';
@@ -19,12 +18,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from '@/lib/utils';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EconomicCalendarProps {
   events: EconomicEvent[];
+  isLoading?: boolean;
 }
 
-const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
+const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading = false }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     dateRange: {
@@ -47,18 +48,14 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
     }
   };
 
-  // Filter events based on filters and search
   const filteredEvents = events.filter(event => {
-    // Date filter
     const eventDate = new Date(event.date);
     const isInDateRange = 
       eventDate >= filterOptions.dateRange.from && 
       eventDate <= filterOptions.dateRange.to;
     
-    // Impact filter
     const matchesImpact = filterOptions.impactLevels?.includes(event.impact) ?? true;
     
-    // Search query
     const matchesSearch = 
       searchQuery === '' || 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -68,7 +65,6 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
     return isInDateRange && matchesImpact && matchesSearch;
   });
 
-  // Group events by date for display
   const groupedEvents: { [date: string]: EconomicEvent[] } = {};
   
   filteredEvents.forEach(event => {
@@ -81,14 +77,12 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
     groupedEvents[dateStr].push(event);
   });
 
-  // Sort events by time within each date group
   Object.keys(groupedEvents).forEach(date => {
     groupedEvents[date].sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
   });
 
-  // Toggle impact level filter
   const toggleImpactLevel = (level: 'high' | 'medium' | 'low') => {
     setFilterOptions(prev => {
       const currentLevels = prev.impactLevels || [];
@@ -103,11 +97,35 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
     });
   };
 
+  const renderLoadingSkeleton = () => (
+    <div className="space-y-4">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="animate-pulse">
+          <Skeleton className="h-6 w-64 mb-2" />
+          <div className="rounded-md border border-border">
+            <div className="h-10 bg-secondary/50" />
+            {[1, 2, 3].map(j => (
+              <div key={j} className="flex border-t border-border p-3">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-12 ml-4" />
+                <Skeleton className="h-6 w-48 ml-4 flex-grow" />
+                <Skeleton className="h-6 w-16 ml-4" />
+                <Skeleton className="h-6 w-16 ml-4" />
+                <Skeleton className="h-6 w-16 ml-4" />
+                <Skeleton className="h-6 w-16 ml-4" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <Card className="bg-cardDark border-border">
       <CardHeader className="space-y-2 pb-2">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle>Economic Calendar</CardTitle>
+          <CardTitle>Economic Calendar (ForexFactory)</CardTitle>
           
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative w-full sm:w-auto">
@@ -117,12 +135,13 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
                 className="pl-8 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2" disabled={isLoading}>
                   <CalendarIcon className="h-4 w-4" />
                   <span className="hidden sm:inline">Date Range</span>
                 </Button>
@@ -152,7 +171,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
             
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2" disabled={isLoading}>
                   <Filter className="h-4 w-4" />
                   <span className="hidden sm:inline">Filters</span>
                 </Button>
@@ -223,7 +242,9 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events }) => {
         </div>
       </CardHeader>
       <CardContent className="pb-4">
-        {Object.keys(groupedEvents).length > 0 ? (
+        {isLoading ? (
+          renderLoadingSkeleton()
+        ) : Object.keys(groupedEvents).length > 0 ? (
           <div className="space-y-4">
             {Object.keys(groupedEvents)
               .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())

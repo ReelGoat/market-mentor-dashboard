@@ -1,19 +1,49 @@
 
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import EconomicCalendar from '@/components/news/EconomicCalendar';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { generateMockEvents } from '@/utils/mockData';
+import { fetchEconomicEvents } from '@/services/forexFactoryService';
+import { toast } from 'sonner';
 
 const NewsEvents: React.FC = () => {
-  // Generate mock economic events
-  const economicEvents = generateMockEvents();
+  const { data: economicEvents, isLoading, error, refetch } = useQuery({
+    queryKey: ['economicEvents'],
+    queryFn: fetchEconomicEvents,
+    onError: (err) => {
+      console.error('Error fetching economic events:', err);
+      toast.error('Failed to load economic events. Using mock data instead.');
+      return generateMockEvents();
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
+  // Fallback to mock data if there's an error
+  const events = error ? generateMockEvents() : economicEvents || [];
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">News & Events</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">News & Events</h1>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => { 
+              refetch();
+              toast.info('Refreshing economic calendar data...');
+            }}
+            className="gap-2"
+            disabled={isLoading}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
 
         <Card className="bg-cardDark/50 border-border">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
@@ -35,7 +65,7 @@ const NewsEvents: React.FC = () => {
           </CardContent>
         </Card>
 
-        <EconomicCalendar events={economicEvents} />
+        <EconomicCalendar events={events} isLoading={isLoading} />
       </div>
     </MainLayout>
   );
