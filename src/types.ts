@@ -36,6 +36,13 @@ export interface PerformanceMetrics {
 // Market categories
 export type MarketCategory = 'forex' | 'metals' | 'crypto' | 'indices' | 'commodities' | 'stocks' | 'other';
 
+// Market Symbol
+export interface MarketSymbol {
+  symbol: string;
+  category: MarketCategory;
+  name?: string;
+}
+
 // Economic Event Type
 export interface EconomicEvent {
   id: string;

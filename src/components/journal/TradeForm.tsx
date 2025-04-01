@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Trade } from '@/types';
-import { currencyPairs } from '@/utils/mockData';
+import { Trade, MarketCategory } from '@/types';
+import { getAllMarketSymbols, getMarketSymbolsByCategory } from '@/utils/marketSymbols';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -37,6 +40,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const [notes, setNotes] = useState<string>(editTrade?.notes || '');
   const [screenshot, setScreenshot] = useState<string | undefined>(editTrade?.screenshot);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [selectedCategory, setSelectedCategory] = useState<MarketCategory>('forex');
 
   useEffect(() => {
     if (entryPrice && exitPrice && lotSize) {
@@ -92,6 +96,19 @@ const TradeForm: React.FC<TradeFormProps> = ({
     }
   };
 
+  // Define market categories
+  const marketCategories: { label: string; value: MarketCategory }[] = [
+    { label: 'Forex', value: 'forex' },
+    { label: 'Metals', value: 'metals' },
+    { label: 'Crypto', value: 'crypto' },
+    { label: 'Indices', value: 'indices' },
+    { label: 'Stocks', value: 'stocks' },
+    { label: 'Commodities', value: 'commodities' },
+  ];
+
+  // Get symbols for the selected category
+  const symbolsForCategory = getMarketSymbolsByCategory(selectedCategory);
+
   return (
     <div className="bg-cardDark rounded-lg p-4 card-gradient">
       <div className="flex justify-between items-center mb-4">
@@ -116,24 +133,46 @@ const TradeForm: React.FC<TradeFormProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="symbol">Symbol</Label>
+            <Label htmlFor="marketCategory">Market Category</Label>
             <Select 
-              value={symbol} 
-              onValueChange={setSymbol}
+              value={selectedCategory} 
+              onValueChange={(value) => setSelectedCategory(value as MarketCategory)}
             >
-              <SelectTrigger id="symbol" className={errors.symbol ? "border-loss" : ""}>
-                <SelectValue placeholder="Select currency pair" />
+              <SelectTrigger id="marketCategory">
+                <SelectValue placeholder="Select market category" />
               </SelectTrigger>
               <SelectContent>
-                {currencyPairs.map((pair) => (
-                  <SelectItem key={pair} value={pair}>
-                    {pair}
+                {marketCategories.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.symbol && <p className="text-xs text-loss">{errors.symbol}</p>}
           </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="symbol">Symbol</Label>
+          <Select 
+            value={symbol} 
+            onValueChange={setSymbol}
+          >
+            <SelectTrigger id="symbol" className={errors.symbol ? "border-loss" : ""}>
+              <SelectValue placeholder="Select trading symbol" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>{selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}</SelectLabel>
+                {symbolsForCategory.map((item) => (
+                  <SelectItem key={item.symbol} value={item.symbol}>
+                    {item.symbol} {item.name ? `- ${item.name}` : ''}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          {errors.symbol && <p className="text-xs text-loss">{errors.symbol}</p>}
         </div>
         
         <div className="grid grid-cols-2 gap-4">
