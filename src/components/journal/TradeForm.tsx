@@ -16,8 +16,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, Save, X } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  ToggleGroup, 
+  ToggleGroupItem 
+} from "@/components/ui/toggle-group";
+import { 
+  RadioGroup, 
+  RadioGroupItem 
+} from "@/components/ui/radio-group";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
 
 interface TradeFormProps {
   selectedDate: Date;
@@ -39,6 +54,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const [pnl, setPnl] = useState<number>(editTrade?.pnl || 0);
   const [notes, setNotes] = useState<string>(editTrade?.notes || '');
   const [screenshot, setScreenshot] = useState<string | undefined>(editTrade?.screenshot);
+  const [direction, setDirection] = useState<'buy' | 'sell'>(editTrade?.direction || 'buy');
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [selectedCategory, setSelectedCategory] = useState<MarketCategory>('forex');
 
@@ -49,11 +65,21 @@ const TradeForm: React.FC<TradeFormProps> = ({
       const size = parseFloat(lotSize);
       
       if (!isNaN(entry) && !isNaN(exit) && !isNaN(size)) {
-        const calculatedPnl = (exit - entry) * size * 100;
+        // Different calculation based on direction
+        let calculatedPnl: number;
+        
+        if (direction === 'buy') {
+          // For buy: (exit - entry) * lotSize * 100
+          calculatedPnl = (exit - entry) * size * 100;
+        } else {
+          // For sell: (entry - exit) * lotSize * 100
+          calculatedPnl = (entry - exit) * size * 100;
+        }
+        
         setPnl(parseFloat(calculatedPnl.toFixed(2)));
       }
     }
-  }, [entryPrice, exitPrice, lotSize]);
+  }, [entryPrice, exitPrice, lotSize, direction]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +105,8 @@ const TradeForm: React.FC<TradeFormProps> = ({
       lotSize: parseFloat(lotSize),
       pnl,
       notes,
-      screenshot
+      screenshot,
+      direction
     };
     
     onSave(trade);
@@ -173,6 +200,30 @@ const TradeForm: React.FC<TradeFormProps> = ({
             </SelectContent>
           </Select>
           {errors.symbol && <p className="text-xs text-loss">{errors.symbol}</p>}
+        </div>
+
+        {/* Trade Direction Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="direction">Trade Direction</Label>
+          <RadioGroup 
+            id="direction" 
+            value={direction} 
+            onValueChange={(value) => setDirection(value as 'buy' | 'sell')}
+            className="flex space-x-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="buy" id="buy" />
+              <Label htmlFor="buy" className="flex items-center">
+                <ArrowUp className="h-4 w-4 text-profit mr-1" /> Buy
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="sell" id="sell" />
+              <Label htmlFor="sell" className="flex items-center">
+                <ArrowDown className="h-4 w-4 text-loss mr-1" /> Sell
+              </Label>
+            </div>
+          </RadioGroup>
         </div>
         
         <div className="grid grid-cols-2 gap-4">

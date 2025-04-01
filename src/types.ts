@@ -1,4 +1,3 @@
-
 // Trade Types
 export interface Trade {
   id: string;
@@ -10,6 +9,7 @@ export interface Trade {
   pnl: number;
   notes: string;
   screenshot?: string; // Base64 or URL
+  direction: 'buy' | 'sell'; // Trade direction
 }
 
 // Calendar day status
