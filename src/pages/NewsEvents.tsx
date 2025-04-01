@@ -11,10 +11,14 @@ import { fetchAggregatedEconomicEvents } from '@/services/economicDataService';
 import { toast } from 'sonner';
 
 const NewsEvents: React.FC = () => {
+  // Set query to auto-refresh weekly (7 days in milliseconds)
+  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  
   const { data: economicEvents, isLoading, error, refetch } = useQuery({
     queryKey: ['economicEvents'],
     queryFn: fetchAggregatedEconomicEvents,
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: ONE_WEEK_MS, // 1 week
+    refetchInterval: ONE_WEEK_MS, // Auto-refresh every week
     retry: 1,
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
@@ -33,7 +37,7 @@ const NewsEvents: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">News & Events</h1>
+          <h1 className="text-2xl font-bold">Weekly Market Calendar</h1>
           <Button 
             variant="outline" 
             size="sm" 

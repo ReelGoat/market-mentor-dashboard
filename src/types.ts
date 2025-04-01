@@ -33,6 +33,9 @@ export interface PerformanceMetrics {
   profitFactor: number;
 }
 
+// Market categories
+export type MarketCategory = 'forex' | 'metals' | 'crypto' | 'indices' | 'commodities' | 'stocks' | 'other';
+
 // Economic Event Type
 export interface EconomicEvent {
   id: string;
@@ -45,6 +48,7 @@ export interface EconomicEvent {
   currency: string;
   description?: string;
   source?: string;
+  categories?: MarketCategory[]; // Market categories affected by this event
 }
 
 // Filter options
@@ -56,5 +60,6 @@ export interface FilterOptions {
   symbols?: string[];
   impactLevels?: ('high' | 'medium' | 'low')[];
   sources?: string[];
+  categories?: MarketCategory[];
   search?: string;
 }

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { EconomicEvent, FilterOptions } from '@/types';
+import { EconomicEvent, FilterOptions, MarketCategory } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Search, Calendar as CalendarIcon, Filter } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Filter, Tag } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -27,14 +27,20 @@ interface EconomicCalendarProps {
 }
 
 const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading = false }) => {
+  // Set default date range to the entire week
+  const today = new Date();
+  const endOfWeek = new Date(today);
+  endOfWeek.setDate(today.getDate() + 6); // Show 7 days (full week)
+  
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     dateRange: {
-      from: new Date(),
-      to: new Date(new Date().setDate(new Date().getDate() + 7)),
+      from: today,
+      to: endOfWeek,
     },
     impactLevels: ['high', 'medium', 'low'],
     sources: [], // No sources filtered out by default
+    categories: [], // No categories filtered out by default
   });
 
   // Extract all unique sources from events
@@ -47,6 +53,31 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
     });
     return Array.from(sources).sort();
   }, [events]);
+  
+  // Extract all unique categories from events
+  const availableCategories = React.useMemo(() => {
+    const categories = new Set<MarketCategory>();
+    events.forEach(event => {
+      if (event.categories && event.categories.length > 0) {
+        event.categories.forEach(category => categories.add(category));
+      }
+    });
+    return Array.from(categories).sort();
+  }, [events]);
+  
+  const getCategoryColor = (category: MarketCategory) => {
+    const categoryColors: Record<MarketCategory, string> = {
+      'forex': 'bg-blue-500 text-white',
+      'metals': 'bg-yellow-500 text-black',
+      'crypto': 'bg-violet-500 text-white',
+      'indices': 'bg-green-500 text-white',
+      'commodities': 'bg-orange-500 text-white',
+      'stocks': 'bg-cyan-500 text-white',
+      'other': 'bg-gray-500 text-white',
+    };
+    
+    return categoryColors[category] || 'bg-gray-500 text-white';
+  };
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
@@ -88,6 +119,14 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
       !filterOptions.sources || 
       filterOptions.sources.length === 0 || 
       (event.source && filterOptions.sources.includes(event.source));
+      
+    // Filter by category if categories are selected
+    const matchesCategory = 
+      !filterOptions.categories || 
+      filterOptions.categories.length === 0 || 
+      (event.categories && event.categories.some(cat => 
+        filterOptions.categories?.includes(cat)
+      ));
     
     const matchesSearch = 
       searchQuery === '' || 
@@ -96,7 +135,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
       (event.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (event.source || '').toLowerCase().includes(searchQuery.toLowerCase());
     
-    return isInDateRange && matchesImpact && matchesSource && matchesSearch;
+    return isInDateRange && matchesImpact && matchesSource && matchesCategory && matchesSearch;
   });
 
   const groupedEvents: { [date: string]: EconomicEvent[] } = {};
@@ -144,12 +183,26 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
       };
     });
   };
+  
+  const toggleCategory = (category: MarketCategory) => {
+    setFilterOptions(prev => {
+      const currentCategories = prev.categories || [];
+      const newCategories = currentCategories.includes(category)
+        ? currentCategories.filter(c => c !== category)
+        : [...currentCategories, category];
+      
+      return {
+        ...prev,
+        categories: newCategories
+      };
+    });
+  };
 
   return (
     <Card className="bg-cardDark border-border">
       <CardHeader className="space-y-2 pb-2">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle>Economic Calendar (Multi-Source)</CardTitle>
+          <CardTitle>Weekly Market Calendar</CardTitle>
           
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative w-full sm:w-auto">
@@ -262,6 +315,28 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
                       </div>
                     </div>
                   )}
+                  
+                  {availableCategories.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2">Market Categories</h4>
+                      <div className="space-y-2">
+                        {availableCategories.map(category => (
+                          <div key={category} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`filter-category-${category}`} 
+                              checked={!filterOptions.categories?.length || filterOptions.categories.includes(category)}
+                              onCheckedChange={() => toggleCategory(category)}
+                            />
+                            <Label htmlFor={`filter-category-${category}`} className="flex items-center">
+                              <Badge className={cn("mr-2", getCategoryColor(category))}>
+                                {category.charAt(0).toUpperCase() + category.slice(1)}
+                              </Badge>
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </PopoverContent>
             </Popover>
@@ -283,6 +358,12 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
             <Badge variant="outline" className="gap-1">
               <span>Sources:</span>
               <span className="ml-1">{filterOptions.sources.length} selected</span>
+            </Badge>
+          )}
+          {filterOptions.categories && filterOptions.categories.length > 0 && filterOptions.categories.length < availableCategories.length && (
+            <Badge variant="outline" className="gap-1">
+              <span>Markets:</span>
+              <span className="ml-1">{filterOptions.categories.length} selected</span>
             </Badge>
           )}
           {searchQuery && (
@@ -315,6 +396,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
                             <th className="text-left py-2 px-4 font-medium text-sm">Currency</th>
                             <th className="text-left py-2 px-4 font-medium text-sm">Event</th>
                             <th className="text-center py-2 px-4 font-medium text-sm">Impact</th>
+                            <th className="text-center py-2 px-4 font-medium text-sm">Categories</th>
                             <th className="text-right py-2 px-4 font-medium text-sm">Previous</th>
                             <th className="text-right py-2 px-4 font-medium text-sm">Forecast</th>
                             <th className="text-right py-2 px-4 font-medium text-sm">Actual</th>
@@ -348,6 +430,15 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
                                 <Badge className={cn("capitalize", getImpactColor(event.impact))}>
                                   {event.impact}
                                 </Badge>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <div className="flex flex-wrap gap-1 justify-center">
+                                  {event.categories && event.categories.map(category => (
+                                    <Badge key={category} className={cn("text-xs", getCategoryColor(category))}>
+                                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                                    </Badge>
+                                  ))}
+                                </div>
                               </td>
                               <td className="py-3 px-4 text-right text-sm">
                                 {event.previous}
