@@ -34,7 +34,19 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
       to: new Date(new Date().setDate(new Date().getDate() + 7)),
     },
     impactLevels: ['high', 'medium', 'low'],
+    sources: [], // No sources filtered out by default
   });
+
+  // Extract all unique sources from events
+  const availableSources = React.useMemo(() => {
+    const sources = new Set<string>();
+    events.forEach(event => {
+      if (event.source) {
+        sources.add(event.source);
+      }
+    });
+    return Array.from(sources).sort();
+  }, [events]);
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
@@ -49,6 +61,20 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
     }
   };
 
+  const getSourceColor = (source: string) => {
+    // Create a set of colors to assign to sources
+    const sourceColors: Record<string, string> = {
+      'ForexFactory': 'bg-blue-500 text-white',
+      'Investing.com': 'bg-green-500 text-white',
+      'Trading Economics': 'bg-purple-500 text-white',
+      'FxStreet': 'bg-red-500 text-white',
+      'Barchart': 'bg-orange-500 text-white',
+      'NewsAPI': 'bg-indigo-500 text-white',
+    };
+    
+    return sourceColors[source] || 'bg-gray-500 text-white';
+  };
+
   const filteredEvents = events.filter(event => {
     const eventDate = new Date(event.date);
     const isInDateRange = 
@@ -56,14 +82,21 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
       eventDate <= filterOptions.dateRange.to;
     
     const matchesImpact = filterOptions.impactLevels?.includes(event.impact) ?? true;
+
+    // Filter by source if sources are selected
+    const matchesSource = 
+      !filterOptions.sources || 
+      filterOptions.sources.length === 0 || 
+      (event.source && filterOptions.sources.includes(event.source));
     
     const matchesSearch = 
       searchQuery === '' || 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.currency.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (event.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+      (event.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.source || '').toLowerCase().includes(searchQuery.toLowerCase());
     
-    return isInDateRange && matchesImpact && matchesSearch;
+    return isInDateRange && matchesImpact && matchesSource && matchesSearch;
   });
 
   const groupedEvents: { [date: string]: EconomicEvent[] } = {};
@@ -98,11 +131,25 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
     });
   };
 
+  const toggleSource = (source: string) => {
+    setFilterOptions(prev => {
+      const currentSources = prev.sources || [];
+      const newSources = currentSources.includes(source)
+        ? currentSources.filter(s => s !== source)
+        : [...currentSources, source];
+      
+      return {
+        ...prev,
+        sources: newSources
+      };
+    });
+  };
+
   return (
     <Card className="bg-cardDark border-border">
       <CardHeader className="space-y-2 pb-2">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle>Economic Calendar (ForexFactory)</CardTitle>
+          <CardTitle>Economic Calendar (Multi-Source)</CardTitle>
           
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative w-full sm:w-auto">
@@ -153,8 +200,8 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
                   <span className="hidden sm:inline">Filters</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-4" align="end">
-                <div className="space-y-4">
+              <PopoverContent className="w-auto p-4 max-h-[80vh] overflow-y-auto" align="end">
+                <div className="space-y-6">
                   <div>
                     <h4 className="font-medium mb-2">Impact Level</h4>
                     <div className="space-y-2">
@@ -193,6 +240,28 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
                       </div>
                     </div>
                   </div>
+                  
+                  {availableSources.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2">Data Sources</h4>
+                      <div className="space-y-2">
+                        {availableSources.map(source => (
+                          <div key={source} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`filter-source-${source}`} 
+                              checked={!filterOptions.sources?.length || filterOptions.sources.includes(source)}
+                              onCheckedChange={() => toggleSource(source)}
+                            />
+                            <Label htmlFor={`filter-source-${source}`} className="flex items-center">
+                              <Badge className={cn("mr-2", getSourceColor(source))}>
+                                {source}
+                              </Badge>
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </PopoverContent>
             </Popover>
@@ -208,6 +277,12 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
             <Badge variant="outline" className="gap-1">
               <span>Impact:</span>
               <span className="ml-1 capitalize">{filterOptions.impactLevels.join(', ')}</span>
+            </Badge>
+          )}
+          {filterOptions.sources && filterOptions.sources.length > 0 && filterOptions.sources.length < availableSources.length && (
+            <Badge variant="outline" className="gap-1">
+              <span>Sources:</span>
+              <span className="ml-1">{filterOptions.sources.length} selected</span>
             </Badge>
           )}
           {searchQuery && (
@@ -236,6 +311,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
                         <thead>
                           <tr className="bg-secondary/50">
                             <th className="text-left py-2 px-4 font-medium text-sm">Time</th>
+                            <th className="text-left py-2 px-4 font-medium text-sm">Source</th>
                             <th className="text-left py-2 px-4 font-medium text-sm">Currency</th>
                             <th className="text-left py-2 px-4 font-medium text-sm">Event</th>
                             <th className="text-center py-2 px-4 font-medium text-sm">Impact</th>
@@ -249,6 +325,13 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({ events, isLoading =
                             <tr key={event.id} className="border-t border-border hover:bg-secondary/40 transition-colors">
                               <td className="py-3 px-4 text-sm">
                                 {format(new Date(event.date), 'h:mm a')}
+                              </td>
+                              <td className="py-3 px-4">
+                                {event.source && (
+                                  <Badge className={cn("text-xs", getSourceColor(event.source))}>
+                                    {event.source}
+                                  </Badge>
+                                )}
                               </td>
                               <td className="py-3 px-4 font-medium">
                                 {event.currency}

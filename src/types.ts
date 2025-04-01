@@ -44,6 +44,7 @@ export interface EconomicEvent {
   actual?: string;
   currency: string;
   description?: string;
+  source?: string;
 }
 
 // Filter options
@@ -54,5 +55,6 @@ export interface FilterOptions {
   };
   symbols?: string[];
   impactLevels?: ('high' | 'medium' | 'low')[];
+  sources?: string[];
   search?: string;
 }

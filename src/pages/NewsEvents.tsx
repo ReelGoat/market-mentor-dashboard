@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateMockEvents } from '@/utils/mockData';
-import { fetchEconomicEvents } from '@/services/forexFactoryService';
+import { fetchAggregatedEconomicEvents } from '@/services/economicDataService';
 import { toast } from 'sonner';
 
 const NewsEvents: React.FC = () => {
   const { data: economicEvents, isLoading, error, refetch } = useQuery({
     queryKey: ['economicEvents'],
-    queryFn: fetchEconomicEvents,
+    queryFn: fetchAggregatedEconomicEvents,
     staleTime: 1000 * 60 * 60, // 1 hour
     retry: 1,
     gcTime: 1000 * 60 * 30, // 30 minutes
