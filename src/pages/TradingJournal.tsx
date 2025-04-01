@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import TradeCalendar from '@/components/journal/TradeCalendar';
 import TradeForm from '@/components/journal/TradeForm';
@@ -13,11 +14,17 @@ import {
 } from 'lucide-react';
 import { Trade, DailySummary } from '@/types';
 import { 
-  generateMockTrades, 
   generateDailySummaries,
   calculatePerformanceMetrics
 } from '@/utils/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { 
+  fetchTrades, 
+  saveTrade, 
+  deleteTrade,
+  clearMonthTrades
+} from '@/services/supabaseService';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,15 +39,48 @@ import {
 
 const TradingJournal: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showTradeForm, setShowTradeForm] = useState<boolean>(false);
   const [editTrade, setEditTrade] = useState<Trade | undefined>(undefined);
+  const [isLoadingTrades, setIsLoadingTrades] = useState<boolean>(true);
   
-  // Initialize with mock data
-  const [trades, setTrades] = useState<Trade[]>(generateMockTrades());
-  const [dailySummaries, setDailySummaries] = useState<DailySummary[]>(
-    generateDailySummaries(trades)
-  );
+  // State for trades and summaries
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
+  
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, isLoading, navigate]);
+
+  // Fetch trades from Supabase
+  useEffect(() => {
+    const loadTrades = async () => {
+      if (!user) return;
+      
+      setIsLoadingTrades(true);
+      try {
+        const tradesData = await fetchTrades();
+        setTrades(tradesData);
+        setDailySummaries(generateDailySummaries(tradesData));
+      } catch (error) {
+        console.error("Error loading trades:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load your trades. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingTrades(false);
+      }
+    };
+
+    loadTrades();
+  }, [user, toast]);
   
   const getTradesForSelectedDate = () => {
     return trades.filter(trade => 
@@ -64,42 +104,55 @@ const TradingJournal: React.FC = () => {
     setShowTradeForm(true);
   };
   
-  const handleSaveTrade = (trade: Trade) => {
+  const handleSaveTrade = async (trade: Trade) => {
     const isEditing = !!editTrade;
-    let updatedTrades: Trade[];
     
-    if (isEditing) {
-      // Update existing trade
-      updatedTrades = trades.map(t => 
-        t.id === trade.id ? trade : t
-      );
+    try {
+      await saveTrade(trade);
+      
+      // Refetch trades to get the latest data
+      const updatedTrades = await fetchTrades();
+      setTrades(updatedTrades);
+      setDailySummaries(generateDailySummaries(updatedTrades));
+      
       toast({
-        title: "Trade Updated",
-        description: `Your trade for ${trade.symbol} has been updated.`,
+        title: isEditing ? "Trade Updated" : "Trade Added",
+        description: `Your trade for ${trade.symbol} has been ${isEditing ? 'updated' : 'added'}.`,
       });
-    } else {
-      // Add new trade
-      updatedTrades = [...trades, trade];
+    } catch (error) {
+      console.error("Error saving trade:", error);
       toast({
-        title: "Trade Added",
-        description: `Your trade for ${trade.symbol} has been added.`,
+        title: "Error",
+        description: `Failed to ${isEditing ? 'update' : 'add'} trade. Please try again.`,
+        variant: "destructive",
       });
     }
     
-    setTrades(updatedTrades);
-    setDailySummaries(generateDailySummaries(updatedTrades));
     setShowTradeForm(false);
     setEditTrade(undefined);
   };
   
-  const handleDeleteTrade = (tradeId: string) => {
-    const updatedTrades = trades.filter(t => t.id !== tradeId);
-    setTrades(updatedTrades);
-    setDailySummaries(generateDailySummaries(updatedTrades));
-    toast({
-      title: "Trade Deleted",
-      description: "The trade has been removed from your journal.",
-    });
+  const handleDeleteTrade = async (tradeId: string) => {
+    try {
+      await deleteTrade(tradeId);
+      
+      // Update local state
+      const updatedTrades = trades.filter(t => t.id !== tradeId);
+      setTrades(updatedTrades);
+      setDailySummaries(generateDailySummaries(updatedTrades));
+      
+      toast({
+        title: "Trade Deleted",
+        description: "The trade has been removed from your journal.",
+      });
+    } catch (error) {
+      console.error("Error deleting trade:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete trade. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleCancelTradeForm = () => {
@@ -107,22 +160,30 @@ const TradingJournal: React.FC = () => {
     setEditTrade(undefined);
   };
 
-  const handleClearMonthTrades = () => {
+  const handleClearMonthTrades = async () => {
     const currentMonth = selectedDate.getMonth();
     const currentYear = selectedDate.getFullYear();
     
-    const updatedTrades = trades.filter(trade => {
-      const tradeDate = new Date(trade.date);
-      return tradeDate.getMonth() !== currentMonth || tradeDate.getFullYear() !== currentYear;
-    });
-    
-    setTrades(updatedTrades);
-    setDailySummaries(generateDailySummaries(updatedTrades));
-    
-    toast({
-      title: "Trades Cleared",
-      description: `All trades for ${selectedDate.toLocaleString('default', { month: 'long' })} ${currentYear} have been cleared.`,
-    });
+    try {
+      await clearMonthTrades(currentYear, currentMonth);
+      
+      // Refetch trades to get the latest data
+      const updatedTrades = await fetchTrades();
+      setTrades(updatedTrades);
+      setDailySummaries(generateDailySummaries(updatedTrades));
+      
+      toast({
+        title: "Trades Cleared",
+        description: `All trades for ${selectedDate.toLocaleString('default', { month: 'long' })} ${currentYear} have been cleared.`,
+      });
+    } catch (error) {
+      console.error("Error clearing month trades:", error);
+      toast({
+        title: "Error",
+        description: "Failed to clear trades. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const selectedDateTrades = getTradesForSelectedDate();
@@ -131,6 +192,19 @@ const TradingJournal: React.FC = () => {
   // Get current month and year for display
   const currentMonthName = selectedDate.toLocaleString('default', { month: 'long' });
   const currentYear = selectedDate.getFullYear();
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent mx-auto mb-4"></div>
+            <p>Loading...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -196,7 +270,12 @@ const TradingJournal: React.FC = () => {
             </div>
           </div>
           
-          {showTradeForm ? (
+          {isLoadingTrades ? (
+            <div className="bg-cardDark rounded-lg p-8 text-center min-h-[200px] flex items-center justify-center card-gradient">
+              <div className="animate-spin h-6 w-6 border-4 border-primary rounded-full border-t-transparent mr-2"></div>
+              <p className="text-muted-foreground">Loading your trades...</p>
+            </div>
+          ) : showTradeForm ? (
             <TradeForm 
               selectedDate={selectedDate}
               onSave={handleSaveTrade}
