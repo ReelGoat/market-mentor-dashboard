@@ -55,6 +55,9 @@ export const fetchTrades = async () => {
 };
 
 export const saveTrade = async (trade: Trade) => {
+  // Ensure direction is either 'buy' or 'sell'
+  const safeDirection: 'buy' | 'sell' = trade.direction === 'sell' ? 'sell' : 'buy';
+  
   // Prepare trade data in the format expected by the database
   const tradeData = {
     id: trade.id,
@@ -67,7 +70,7 @@ export const saveTrade = async (trade: Trade) => {
     pnl: trade.pnl,
     notes: trade.notes,
     screenshot: trade.screenshot,
-    direction: trade.direction || 'buy', // Ensure a default value
+    direction: safeDirection, // Use the safe direction
   };
 
   const { data, error } = await supabase
