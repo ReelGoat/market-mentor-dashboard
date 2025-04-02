@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
   format, 
@@ -27,12 +27,16 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
   selectedDate, 
   onDateSelect 
 }) => {
-  // Make sure currentMonth is synced with the selectedDate initially
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(
-    selectedDate.getFullYear(),
-    selectedDate.getMonth(),
-    1
-  ));
+  // Initialize currentMonth to the current month of the selected date
+  const [currentMonth, setCurrentMonth] = useState<Date>(
+    new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+  );
+
+  // Ensure selectedDate is always set to the current date on initial render
+  useEffect(() => {
+    const today = new Date();
+    onDateSelect(today);
+  }, []);
 
   const nextMonth = () => {
     const nextMonth = addMonths(currentMonth, 1);
