@@ -50,6 +50,7 @@ export const fetchTrades = async () => {
     pnl: parseFloat(item.pnl.toString()),
     notes: item.notes || "",
     screenshot: item.screenshot,
+    direction: item.direction || 'buy', // Default to 'buy' for backward compatibility
   }));
 };
 
@@ -66,6 +67,7 @@ export const saveTrade = async (trade: Trade) => {
     pnl: trade.pnl,
     notes: trade.notes,
     screenshot: trade.screenshot,
+    direction: trade.direction,
   };
 
   const { data, error } = await supabase

@@ -26,7 +26,10 @@ export const generateMockTrades = (): Trade[] => {
         const entryPrice = parseFloat((Math.random() * 100).toFixed(4));
         const exitPrice = parseFloat((entryPrice * (0.8 + Math.random() * 0.4)).toFixed(4));
         const lotSize = parseFloat((Math.random() * 10).toFixed(2));
-        const pnl = parseFloat(((exitPrice - entryPrice) * lotSize * 100).toFixed(2));
+        const direction = Math.random() > 0.5 ? 'buy' : 'sell';
+        const pnl = direction === 'buy' 
+          ? parseFloat(((exitPrice - entryPrice) * lotSize * 100).toFixed(2))
+          : parseFloat(((entryPrice - exitPrice) * lotSize * 100).toFixed(2));
         
         trades.push({
           id: `trade-${index}-${i}`,
@@ -36,6 +39,7 @@ export const generateMockTrades = (): Trade[] => {
           exitPrice,
           lotSize,
           pnl,
+          direction,
           notes: `${pnl > 0 ? 'Profitable' : 'Losing'} trade on ${symbol}`
         });
       }
