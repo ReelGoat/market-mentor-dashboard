@@ -34,6 +34,7 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          direction: string | null
           entry_price: number
           exit_price: number
           id: string
@@ -48,6 +49,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          direction?: string | null
           entry_price: number
           exit_price: number
           id?: string
@@ -62,6 +64,7 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          direction?: string | null
           entry_price?: number
           exit_price?: number
           id?: string

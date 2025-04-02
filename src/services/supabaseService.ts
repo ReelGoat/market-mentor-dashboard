@@ -67,7 +67,7 @@ export const saveTrade = async (trade: Trade) => {
     pnl: trade.pnl,
     notes: trade.notes,
     screenshot: trade.screenshot,
-    direction: trade.direction,
+    direction: trade.direction || 'buy', // Ensure a default value
   };
 
   const { data, error } = await supabase
