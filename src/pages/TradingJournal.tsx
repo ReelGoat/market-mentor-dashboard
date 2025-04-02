@@ -40,6 +40,7 @@ const TradingJournal: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showTradeForm, setShowTradeForm] = useState<boolean>(false);
   const [editTrade, setEditTrade] = useState<Trade | undefined>(undefined);
@@ -85,6 +86,7 @@ const TradingJournal: React.FC = () => {
   };
   
   const handleDateSelect = (date: Date) => {
+    console.log("Selected date:", date);
     setSelectedDate(date);
     setShowTradeForm(false);
     setEditTrade(undefined);

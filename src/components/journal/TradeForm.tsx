@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Trade, MarketCategory } from '@/types';
@@ -65,14 +64,11 @@ const TradeForm: React.FC<TradeFormProps> = ({
       const size = parseFloat(lotSize);
       
       if (!isNaN(entry) && !isNaN(exit) && !isNaN(size)) {
-        // Different calculation based on direction
         let calculatedPnl: number;
         
         if (direction === 'buy') {
-          // For buy: (exit - entry) * lotSize * 100
           calculatedPnl = (exit - entry) * size * 100;
         } else {
-          // For sell: (entry - exit) * lotSize * 100
           calculatedPnl = (entry - exit) * size * 100;
         }
         
@@ -97,7 +93,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
     }
     
     const trade: Trade = {
-      id: editTrade?.id || '', // Leave blank for new trades, Supabase will generate UUID
+      id: editTrade?.id || '',
       date: selectedDate,
       symbol,
       entryPrice: parseFloat(entryPrice),
@@ -123,7 +119,6 @@ const TradeForm: React.FC<TradeFormProps> = ({
     }
   };
 
-  // Define market categories
   const marketCategories: { label: string; value: MarketCategory }[] = [
     { label: 'Forex', value: 'forex' },
     { label: 'Metals', value: 'metals' },
@@ -133,7 +128,6 @@ const TradeForm: React.FC<TradeFormProps> = ({
     { label: 'Commodities', value: 'commodities' },
   ];
 
-  // Get symbols for the selected category
   const symbolsForCategory = getMarketSymbolsByCategory(selectedCategory);
 
   return (
@@ -202,7 +196,6 @@ const TradeForm: React.FC<TradeFormProps> = ({
           {errors.symbol && <p className="text-xs text-loss">{errors.symbol}</p>}
         </div>
 
-        {/* Trade Direction Selection */}
         <div className="space-y-2">
           <Label htmlFor="direction">Trade Direction</Label>
           <RadioGroup 

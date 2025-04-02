@@ -1,7 +1,18 @@
 
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addMonths, subMonths, getDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
+import { 
+  format, 
+  addMonths, 
+  subMonths, 
+  getDay, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  isSameDay,
+  isSameMonth,
+  isToday
+} from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DailySummary } from '@/types';
 
@@ -16,14 +27,31 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
   selectedDate, 
   onDateSelect 
 }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // Make sure currentMonth is synced with the selectedDate initially
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(
+    selectedDate.getFullYear(),
+    selectedDate.getMonth(),
+    1
+  ));
 
   const nextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
+    const nextMonth = addMonths(currentMonth, 1);
+    setCurrentMonth(nextMonth);
+    
+    // If selected date is not in the new month, update to first day of new month
+    if (!isSameMonth(selectedDate, nextMonth)) {
+      onDateSelect(nextMonth);
+    }
   };
 
   const prevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
+    const prevMonth = subMonths(currentMonth, 1);
+    setCurrentMonth(prevMonth);
+    
+    // If selected date is not in the new month, update to first day of new month
+    if (!isSameMonth(selectedDate, prevMonth)) {
+      onDateSelect(prevMonth);
+    }
   };
 
   const monthStart = startOfMonth(currentMonth);
@@ -36,6 +64,10 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
 
   const getDayColorClass = (day: Date) => {
     const summary = dailySummaries.find(s => isSameDay(s.date, day));
+    
+    if (isToday(day)) {
+      return "text-primary font-bold"; // Highlight today
+    }
     
     if (!summary) return "text-muted-foreground";
     
@@ -55,6 +87,9 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
   const getDayBgClass = (day: Date) => {
     if (isSameDay(day, selectedDate)) {
       return "bg-secondary";
+    }
+    if (isToday(day)) {
+      return "bg-secondary/50"; // Light background for today
     }
     return "";
   };
@@ -113,6 +148,20 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
             </div>
           </button>
         ))}
+      </div>
+      
+      {/* Today button */}
+      <div className="mt-4 flex justify-center">
+        <button
+          onClick={() => {
+            const today = new Date();
+            onDateSelect(today);
+            setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+          }}
+          className="text-sm bg-primary text-primary-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors"
+        >
+          Today
+        </button>
       </div>
     </div>
   );
