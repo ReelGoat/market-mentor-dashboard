@@ -97,7 +97,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
     }
     
     const trade: Trade = {
-      id: editTrade?.id || `trade-${Date.now()}`,
+      id: editTrade?.id || '', // Leave blank for new trades, Supabase will generate UUID
       date: selectedDate,
       symbol,
       entryPrice: parseFloat(entryPrice),

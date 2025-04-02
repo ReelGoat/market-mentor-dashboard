@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -46,18 +45,15 @@ const TradingJournal: React.FC = () => {
   const [editTrade, setEditTrade] = useState<Trade | undefined>(undefined);
   const [isLoadingTrades, setIsLoadingTrades] = useState<boolean>(true);
   
-  // State for trades and summaries
   const [trades, setTrades] = useState<Trade[]>([]);
   const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
   
-  // Redirect to auth if not logged in
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/auth');
     }
   }, [user, isLoading, navigate]);
 
-  // Fetch trades from Supabase
   useEffect(() => {
     const loadTrades = async () => {
       if (!user) return;
@@ -110,7 +106,6 @@ const TradingJournal: React.FC = () => {
     try {
       await saveTrade(trade);
       
-      // Refetch trades to get the latest data
       const updatedTrades = await fetchTrades();
       setTrades(updatedTrades);
       setDailySummaries(generateDailySummaries(updatedTrades));
@@ -136,7 +131,6 @@ const TradingJournal: React.FC = () => {
     try {
       await deleteTrade(tradeId);
       
-      // Update local state
       const updatedTrades = trades.filter(t => t.id !== tradeId);
       setTrades(updatedTrades);
       setDailySummaries(generateDailySummaries(updatedTrades));
@@ -167,7 +161,6 @@ const TradingJournal: React.FC = () => {
     try {
       await clearMonthTrades(currentYear, currentMonth);
       
-      // Refetch trades to get the latest data
       const updatedTrades = await fetchTrades();
       setTrades(updatedTrades);
       setDailySummaries(generateDailySummaries(updatedTrades));
@@ -189,7 +182,6 @@ const TradingJournal: React.FC = () => {
   const selectedDateTrades = getTradesForSelectedDate();
   const performanceMetrics = calculatePerformanceMetrics(trades);
 
-  // Get current month and year for display
   const currentMonthName = selectedDate.toLocaleString('default', { month: 'long' });
   const currentYear = selectedDate.getFullYear();
 
@@ -211,7 +203,6 @@ const TradingJournal: React.FC = () => {
       <h1 className="text-2xl font-bold mb-6">Trading Journal</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column */}
         <div className="space-y-6">
           <TradeCalendar 
             dailySummaries={dailySummaries} 
@@ -222,7 +213,6 @@ const TradingJournal: React.FC = () => {
           <PerformanceMetrics metrics={performanceMetrics} />
         </div>
         
-        {/* Right column */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">

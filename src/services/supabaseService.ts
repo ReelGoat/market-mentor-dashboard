@@ -58,9 +58,12 @@ export const saveTrade = async (trade: Trade) => {
   // Ensure direction is either 'buy' or 'sell'
   const safeDirection: 'buy' | 'sell' = trade.direction === 'sell' ? 'sell' : 'buy';
   
+  // Generate a proper UUID if the ID is in the timestamp format
+  const tradeId = trade.id.startsWith('trade-') ? undefined : trade.id;
+  
   // Prepare trade data in the format expected by the database
   const tradeData = {
-    id: trade.id,
+    id: tradeId, // Leave id undefined for new trades (Supabase will generate UUID)
     user_id: (await getCurrentUser())?.id,
     date: trade.date.toISOString(),
     symbol: trade.symbol,
