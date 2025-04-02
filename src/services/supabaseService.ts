@@ -50,7 +50,7 @@ export const fetchTrades = async () => {
     pnl: parseFloat(item.pnl.toString()),
     notes: item.notes || "",
     screenshot: item.screenshot,
-    direction: item.direction || 'buy', // Default to 'buy' for backward compatibility
+    direction: (item.direction as 'buy' | 'sell') || 'buy', // Type assertion to ensure correct union type
   }));
 };
 
