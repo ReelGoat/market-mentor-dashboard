@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Menu, X, BarChart3, Calendar, FileClock, PieChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLocation, useNavigate } from 'react-router-dom';
+import InstallPrompt from './InstallPrompt';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -96,6 +96,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
         </main>
+        
+        {/* Install Prompt */}
+        <InstallPrompt />
       </div>
     </div>
   );
