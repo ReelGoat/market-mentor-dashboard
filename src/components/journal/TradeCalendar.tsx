@@ -32,16 +32,27 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
     new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   );
 
-  // Get the actual current date on component mount
+  // Get the current date from the system when component mounts
   useEffect(() => {
     // Create a new Date object to get the current date from the system
     const systemDate = new Date();
-    console.log("System date:", systemDate);
+    
+    // Log the current system date for debugging
+    console.log("System date:", systemDate.toString());
+    
+    // Update selected date to today
     onDateSelect(systemDate);
     
     // Update current month view to match
     setCurrentMonth(new Date(systemDate.getFullYear(), systemDate.getMonth(), 1));
   }, []);
+
+  // Update month view whenever selectedDate changes to a different month
+  useEffect(() => {
+    if (!isSameMonth(selectedDate, currentMonth)) {
+      setCurrentMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+    }
+  }, [selectedDate, currentMonth]);
 
   const nextMonth = () => {
     const nextMonth = addMonths(currentMonth, 1);
@@ -164,6 +175,7 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
         <button
           onClick={() => {
             const today = new Date();
+            console.log("Today button clicked, date:", today.toString());
             onDateSelect(today);
             setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
           }}

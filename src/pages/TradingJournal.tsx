@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -43,11 +42,11 @@ const TradingJournal: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   
-  // Initialize with current date to ensure correct date is shown
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showTradeForm, setShowTradeForm] = useState<boolean>(false);
   const [editTrade, setEditTrade] = useState<Trade | undefined>(undefined);
   const [isLoadingTrades, setIsLoadingTrades] = useState<boolean>(true);
+  const [isCalendarSyncing, setIsCalendarSyncing] = useState<boolean>(false);
   
   const [trades, setTrades] = useState<Trade[]>([]);
   const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
@@ -184,21 +183,113 @@ const TradingJournal: React.FC = () => {
     }
   };
 
-  // New function for Google Calendar integration
   const syncWithGoogleCalendar = () => {
-    // Create Google Calendar authorization URL
-    const apiKey = 'YOUR_API_KEY'; // In a real app, this would be stored securely
+    setIsCalendarSyncing(true);
+    
+    const CLIENT_ID = "106285860575406916979";
+    const API_KEY = "AIzaSyDrI_NiymG9FbigqaxE6cLExl9DX9LZaFc";
+    const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
+    const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
     const redirectUri = window.location.origin + '/calendar-callback';
-    const scope = 'https://www.googleapis.com/auth/calendar.readonly';
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${apiKey}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
     
-    toast({
-      title: "Google Calendar Sync",
-      description: "This feature requires a Google Cloud account setup. Please contact the developer to enable this feature.",
+    try {
+      const script = document.createElement("script");
+      script.src = "https://apis.google.com/js/api.js";
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        window.gapi.load('client:auth2', () => {
+          window.gapi.client.init({
+            apiKey: API_KEY,
+            clientId: CLIENT_ID,
+            discoveryDocs: DISCOVERY_DOCS,
+            scope: SCOPES
+          }).then(() => {
+            if (!window.gapi.auth2.getAuthInstance().isSignedIn.get()) {
+              window.gapi.auth2.getAuthInstance().signIn()
+                .then(() => {
+                  fetchCalendarEvents();
+                })
+                .catch((error: any) => {
+                  console.error("Google Sign In Error:", error);
+                  setIsCalendarSyncing(false);
+                  toast({
+                    title: "Authentication Failed",
+                    description: "Could not authenticate with Google Calendar.",
+                    variant: "destructive",
+                  });
+                });
+            } else {
+              fetchCalendarEvents();
+            }
+          }).catch((error: any) => {
+            console.error("Google API Init Error:", error);
+            setIsCalendarSyncing(false);
+            toast({
+              title: "Calendar Sync Failed",
+              description: "Could not initialize Google Calendar API.",
+              variant: "destructive",
+            });
+          });
+        });
+      };
+      
+      script.onerror = () => {
+        setIsCalendarSyncing(false);
+        toast({
+          title: "Calendar Sync Failed",
+          description: "Could not load Google API script.",
+          variant: "destructive",
+        });
+      };
+      
+      document.body.appendChild(script);
+    } catch (error) {
+      console.error("Calendar sync error:", error);
+      setIsCalendarSyncing(false);
+      toast({
+        title: "Calendar Sync Error",
+        description: "An error occurred while syncing with Google Calendar.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const fetchCalendarEvents = () => {
+    window.gapi.client.calendar.events.list({
+      'calendarId': 'primary',
+      'timeMin': new Date().toISOString(),
+      'showDeleted': false,
+      'singleEvents': true,
+      'maxResults': 10,
+      'orderBy': 'startTime'
+    }).then((response: any) => {
+      const events = response.result.items;
+      if (events && events.length > 0) {
+        const firstEventDate = new Date(events[0].start.dateTime || events[0].start.date);
+        onDateSelect(firstEventDate);
+        
+        toast({
+          title: "Calendar Synced",
+          description: `Synced ${events.length} events from your Google Calendar.`,
+        });
+      } else {
+        toast({
+          title: "No Events Found",
+          description: "No upcoming events found in your Google Calendar.",
+        });
+      }
+      setIsCalendarSyncing(false);
+    }).catch((error: any) => {
+      console.error("Error fetching calendar events:", error);
+      setIsCalendarSyncing(false);
+      toast({
+        title: "Calendar Sync Failed",
+        description: "Could not fetch events from your Google Calendar.",
+        variant: "destructive",
+      });
     });
-    
-    // In a real implementation, we would redirect to authUrl
-    // window.location.href = authUrl;
   };
   
   const selectedDateTrades = getTradesForSelectedDate();
@@ -232,15 +323,24 @@ const TradingJournal: React.FC = () => {
             onDateSelect={handleDateSelect}
           />
           
-          {/* Google Calendar Sync Button */}
           <div className="bg-cardDark rounded-lg p-4 card-gradient">
             <Button 
               onClick={syncWithGoogleCalendar}
               className="w-full flex items-center justify-center gap-2"
               variant="outline"
+              disabled={isCalendarSyncing}
             >
-              <Calendar className="h-4 w-4" />
-              Sync with Google Calendar
+              {isCalendarSyncing ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent mr-2"></div>
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-4 w-4" />
+                  Sync with Google Calendar
+                </>
+              )}
             </Button>
           </div>
           
