@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown, Save, X } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Save, X, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   ToggleGroup, 
@@ -56,8 +56,10 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const [direction, setDirection] = useState<'buy' | 'sell'>(editTrade?.direction || 'buy');
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [selectedCategory, setSelectedCategory] = useState<MarketCategory>('forex');
+  const [isPnlPositive, setIsPnlPositive] = useState<boolean>(editTrade ? editTrade.pnl >= 0 : true);
+  const [manualPnl, setManualPnl] = useState<string>(editTrade ? Math.abs(editTrade.pnl).toString() : '0');
 
-  useEffect(() => {
+  const calculatePnl = () => {
     if (entryPrice && exitPrice && lotSize) {
       const entry = parseFloat(entryPrice);
       const exit = parseFloat(exitPrice);
@@ -72,10 +74,20 @@ const TradeForm: React.FC<TradeFormProps> = ({
           calculatedPnl = (entry - exit) * size * 100;
         }
         
-        setPnl(parseFloat(calculatedPnl.toFixed(2)));
+        const roundedPnl = parseFloat(calculatedPnl.toFixed(2));
+        setManualPnl(Math.abs(roundedPnl).toString());
+        setIsPnlPositive(roundedPnl >= 0);
+        setPnl(roundedPnl);
       }
     }
-  }, [entryPrice, exitPrice, lotSize, direction]);
+  };
+
+  useEffect(() => {
+    const pnlValue = parseFloat(manualPnl);
+    if (!isNaN(pnlValue)) {
+      setPnl(isPnlPositive ? pnlValue : -pnlValue);
+    }
+  }, [manualPnl, isPnlPositive]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +98,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
     if (!entryPrice) newErrors.entryPrice = "Entry price is required";
     if (!exitPrice) newErrors.exitPrice = "Exit price is required";
     if (!lotSize) newErrors.lotSize = "Lot size is required";
+    if (!manualPnl) newErrors.pnl = "P&L is required";
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -116,6 +129,17 @@ const TradeForm: React.FC<TradeFormProps> = ({
         setScreenshot(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const togglePnlSign = () => {
+    setIsPnlPositive(!isPnlPositive);
+  };
+
+  const handleManualPnlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setManualPnl(value);
     }
   };
 
@@ -264,20 +288,45 @@ const TradeForm: React.FC<TradeFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="pnl">P&L (USD)</Label>
             <div className="flex items-center space-x-2">
-              <Input
-                id="pnl"
-                value={pnl}
-                readOnly
-                className={cn(
-                  "bg-secondary/60 text-foreground font-medium",
-                  pnl > 0 ? "text-profit" : pnl < 0 ? "text-loss" : ""
-                )}
-              />
-              <ArrowUpDown className={cn(
-                "h-5 w-5",
-                pnl > 0 ? "text-profit" : pnl < 0 ? "text-loss" : "text-muted-foreground"
-              )} />
+              <div className="relative flex-1">
+                <Input
+                  id="pnl"
+                  value={manualPnl}
+                  onChange={handleManualPnlChange}
+                  className={cn(
+                    "pr-10",
+                    isPnlPositive ? "text-profit" : "text-loss",
+                    errors.pnl ? "border-loss" : ""
+                  )}
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className={cn(
+                    "absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7",
+                    isPnlPositive ? "text-profit" : "text-loss"
+                  )}
+                  onClick={togglePnlSign}
+                >
+                  {isPnlPositive ? (
+                    <ArrowUp className="h-4 w-4" />
+                  ) : (
+                    <ArrowDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                title="Calculate P&L from prices"
+                onClick={calculatePnl}
+              >
+                <Calculator className="h-4 w-4" />
+              </Button>
             </div>
+            {errors.pnl && <p className="text-xs text-loss">{errors.pnl}</p>}
           </div>
         </div>
         
