@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -9,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { 
   PlusCircle, 
   AlertTriangle,
-  Trash2
+  Trash2,
+  Calendar
 } from 'lucide-react';
 import { Trade, DailySummary } from '@/types';
 import { 
@@ -41,6 +43,7 @@ const TradingJournal: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   
+  // Initialize with current date to ensure correct date is shown
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showTradeForm, setShowTradeForm] = useState<boolean>(false);
   const [editTrade, setEditTrade] = useState<Trade | undefined>(undefined);
@@ -180,6 +183,23 @@ const TradingJournal: React.FC = () => {
       });
     }
   };
+
+  // New function for Google Calendar integration
+  const syncWithGoogleCalendar = () => {
+    // Create Google Calendar authorization URL
+    const apiKey = 'YOUR_API_KEY'; // In a real app, this would be stored securely
+    const redirectUri = window.location.origin + '/calendar-callback';
+    const scope = 'https://www.googleapis.com/auth/calendar.readonly';
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${apiKey}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+    
+    toast({
+      title: "Google Calendar Sync",
+      description: "This feature requires a Google Cloud account setup. Please contact the developer to enable this feature.",
+    });
+    
+    // In a real implementation, we would redirect to authUrl
+    // window.location.href = authUrl;
+  };
   
   const selectedDateTrades = getTradesForSelectedDate();
   const performanceMetrics = calculatePerformanceMetrics(trades);
@@ -211,6 +231,18 @@ const TradingJournal: React.FC = () => {
             selectedDate={selectedDate}
             onDateSelect={handleDateSelect}
           />
+          
+          {/* Google Calendar Sync Button */}
+          <div className="bg-cardDark rounded-lg p-4 card-gradient">
+            <Button 
+              onClick={syncWithGoogleCalendar}
+              className="w-full flex items-center justify-center gap-2"
+              variant="outline"
+            >
+              <Calendar className="h-4 w-4" />
+              Sync with Google Calendar
+            </Button>
+          </div>
           
           <PerformanceMetrics metrics={performanceMetrics} />
         </div>
