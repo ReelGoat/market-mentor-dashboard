@@ -268,7 +268,7 @@ const TradingJournal: React.FC = () => {
       const events = response.result.items;
       if (events && events.length > 0) {
         const firstEventDate = new Date(events[0].start.dateTime || events[0].start.date);
-        onDateSelect(firstEventDate);
+        handleDateSelect(firstEventDate);
         
         toast({
           title: "Calendar Synced",
