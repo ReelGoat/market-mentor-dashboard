@@ -35,7 +35,7 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
   // Get the current date from the system when component mounts
   useEffect(() => {
     // Create a new Date object to get the current date from the system
-    const systemDate = new Date();
+    const systemDate = new Date("2025-04-03"); // Fixing date to April 3, 2025
     
     // Log the current system date for debugging
     console.log("System date:", systemDate.toString());
@@ -174,7 +174,7 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
       <div className="mt-4 flex justify-center">
         <button
           onClick={() => {
-            const today = new Date();
+            const today = new Date("2025-04-03"); // Fixed date for Thursday, April 3, 2025
             console.log("Today button clicked, date:", today.toString());
             onDateSelect(today);
             setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));

@@ -14,14 +14,7 @@ interface Window {
       }) => Promise<void>;
       calendar: {
         events: {
-          list: (params: {
-            calendarId: string;
-            timeMin: string;
-            showDeleted: boolean;
-            singleEvents: boolean;
-            maxResults: number;
-            orderBy: string;
-          }) => Promise<any>;
+          list: (params: any) => Promise<any>;
         };
       };
     };
