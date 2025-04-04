@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Trade, MarketCategory } from '@/types';
@@ -57,8 +58,9 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [selectedCategory, setSelectedCategory] = useState<MarketCategory>('forex');
   const [isPnlPositive, setIsPnlPositive] = useState<boolean>(editTrade ? editTrade.pnl >= 0 : true);
-  const [manualPnl, setManualPnl] = useState<string>(editTrade ? Math.abs(editTrade.pnl).toString() : '0');
+  const [manualPnl, setManualPnl] = useState<string>(editTrade ? Math.abs(editTrade.pnl).toString() : '');
 
+  // This function calculates PnL from trade parameters when the Calculate button is clicked
   const calculatePnl = () => {
     if (entryPrice && exitPrice && lotSize) {
       const entry = parseFloat(entryPrice);
@@ -82,10 +84,13 @@ const TradeForm: React.FC<TradeFormProps> = ({
     }
   };
 
+  // Update the actual pnl value whenever manualPnl or isPnlPositive changes
   useEffect(() => {
     const pnlValue = parseFloat(manualPnl);
     if (!isNaN(pnlValue)) {
       setPnl(isPnlPositive ? pnlValue : -pnlValue);
+    } else {
+      setPnl(0); // Default to 0 if the input is not a valid number
     }
   }, [manualPnl, isPnlPositive]);
 
@@ -137,7 +142,9 @@ const TradeForm: React.FC<TradeFormProps> = ({
   };
 
   const handleManualPnlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow positive numbers and decimals
     const value = e.target.value;
+    // Allow empty input (for clearing) or valid numbers with optional decimal point
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setManualPnl(value);
     }
