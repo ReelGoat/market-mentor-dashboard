@@ -150,6 +150,12 @@ const TradeForm: React.FC<TradeFormProps> = ({
     }
   };
 
+  // Create a custom handler for lotSize to prevent automatic PnL calculation
+  const handleLotSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLotSize(e.target.value);
+    // No automatic PnL calculation here
+  };
+
   const marketCategories: { label: string; value: MarketCategory }[] = [
     { label: 'Forex', value: 'forex' },
     { label: 'Metals', value: 'metals' },
@@ -286,7 +292,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
               type="number"
               step="0.01"
               value={lotSize}
-              onChange={(e) => setLotSize(e.target.value)}
+              onChange={handleLotSizeChange}
               className={errors.lotSize ? "border-loss" : ""}
             />
             {errors.lotSize && <p className="text-xs text-loss">{errors.lotSize}</p>}
