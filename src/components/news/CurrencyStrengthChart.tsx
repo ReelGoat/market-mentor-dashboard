@@ -1,16 +1,17 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchCurrencyStrength, CurrencyStrength } from '@/services/currencyStrengthService';
+import { fetchCurrencyStrength, CurrencyStrength, isForexMarketOpen } from '@/services/currencyStrengthService';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
-import { RefreshCcw, TrendingUp, TrendingDown } from 'lucide-react';
+import { RefreshCcw, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CurrencyStrengthChart: React.FC = () => {
   const [currencyStrengths, setCurrencyStrengths] = useState<CurrencyStrength[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [isMarketOpen, setIsMarketOpen] = useState<boolean>(false);
   const intervalRef = useRef<number | null>(null);
 
   // Color mapping for currencies
@@ -29,8 +30,16 @@ const CurrencyStrengthChart: React.FC = () => {
   const fetchData = async () => {
     setRefreshing(true);
     try {
-      const data = await fetchCurrencyStrength();
-      setCurrencyStrengths(data);
+      // Check if markets are open
+      const marketOpen = isForexMarketOpen();
+      setIsMarketOpen(marketOpen);
+      
+      if (marketOpen) {
+        const data = await fetchCurrencyStrength();
+        setCurrencyStrengths(data);
+      } else {
+        setCurrencyStrengths([]);
+      }
     } catch (error) {
       console.error("Error fetching currency strength data:", error);
     } finally {
@@ -43,9 +52,11 @@ const CurrencyStrengthChart: React.FC = () => {
   useEffect(() => {
     fetchData();
     
-    // Set up interval to refresh every 3 seconds
+    // Set up interval to refresh every 3 seconds but only if markets are open
     intervalRef.current = window.setInterval(() => {
-      fetchData();
+      if (isForexMarketOpen()) {
+        fetchData();
+      }
     }, 3000);
     
     // Clean up interval on unmount
@@ -83,12 +94,21 @@ const CurrencyStrengthChart: React.FC = () => {
             <CardTitle className="text-base">Currency Strength Meter</CardTitle>
           </div>
           <div className="flex items-center text-xs text-muted-foreground gap-2">
-            <div>Auto-refreshes every 3s</div>
-            <RefreshCcw className={cn(
-              "h-4 w-4", 
-              refreshing && "animate-spin",
-              loading ? "text-muted-foreground" : "text-primary"
-            )} />
+            {isMarketOpen ? (
+              <>
+                <div>Auto-refreshes every 3s</div>
+                <RefreshCcw className={cn(
+                  "h-4 w-4", 
+                  refreshing && "animate-spin",
+                  loading ? "text-muted-foreground" : "text-primary"
+                )} />
+              </>
+            ) : (
+              <div className="flex items-center gap-1 text-loss">
+                <Clock className="h-4 w-4" />
+                <span>Markets Closed</span>
+              </div>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -97,6 +117,16 @@ const CurrencyStrengthChart: React.FC = () => {
           {loading ? (
             <div className="flex h-full w-full items-center justify-center">
               <RefreshCcw className="h-10 w-10 animate-spin text-muted-foreground" />
+            </div>
+          ) : !isMarketOpen ? (
+            <div className="flex h-full w-full items-center justify-center flex-col gap-2">
+              <Clock className="h-16 w-16 text-muted-foreground" />
+              <p className="text-muted-foreground font-medium">Forex Markets Are Currently Closed</p>
+              <p className="text-xs text-muted-foreground">Data will update when markets reopen</p>
+            </div>
+          ) : currencyStrengths.length === 0 ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <p className="text-muted-foreground">No currency data available</p>
             </div>
           ) : (
             <ChartContainer className="h-full" config={chartConfig}>
@@ -163,21 +193,31 @@ const CurrencyStrengthChart: React.FC = () => {
           )}
         </div>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {currencyStrengths.map(({ currency, change }) => (
-            <div key={currency} className="flex items-center gap-2">
-              <div 
-                className="h-3 w-3 rounded-full" 
-                style={{ backgroundColor: currencyColors[currency] || '#FFFFFF' }}
-              ></div>
-              <span className="font-medium">{currency}</span>
-              <span className={cn(
-                "ml-auto text-xs",
-                change >= 0 ? "text-profit" : "text-loss"
-              )}>
-                {change >= 0 ? "+" : ""}{change.toFixed(2)}
-              </span>
+          {currencyStrengths.length > 0 ? (
+            currencyStrengths.map(({ currency, change }) => (
+              <div key={currency} className="flex items-center gap-2">
+                <div 
+                  className="h-3 w-3 rounded-full" 
+                  style={{ backgroundColor: currencyColors[currency] || '#FFFFFF' }}
+                ></div>
+                <span className="font-medium">{currency}</span>
+                <span className={cn(
+                  "ml-auto text-xs",
+                  change >= 0 ? "text-profit" : "text-loss"
+                )}>
+                  {change >= 0 ? "+" : ""}{change.toFixed(2)}
+                </span>
+              </div>
+            ))
+          ) : isMarketOpen && !loading ? (
+            <div className="col-span-4 text-center text-muted-foreground py-2">
+              No currency data available
             </div>
-          ))}
+          ) : !isMarketOpen ? (
+            <div className="col-span-4 text-center text-muted-foreground py-2">
+              Data will be displayed when markets are open
+            </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>

@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 // Currency strength data type
@@ -8,9 +7,41 @@ export interface CurrencyStrength {
   change: number; // Positive = strengthening, negative = weakening
 }
 
+// Function to check if forex markets are currently open
+export const isForexMarketOpen = (): boolean => {
+  // Get current date and time in UTC
+  const now = new Date();
+  const day = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  const hours = now.getUTCHours();
+  
+  // Forex markets are closed on weekends
+  if (day === 0 || day === 6) {
+    return false;
+  }
+
+  // Special case for Friday - markets close earlier (around 21:00 UTC)
+  if (day === 5 && hours >= 21) {
+    return false;
+  }
+
+  // Special case for Sunday - markets open later (around 21:00 UTC in winter, 22:00 UTC in summer)
+  if (day === 0 && hours < 21) {
+    return false;
+  }
+  
+  // Otherwise markets are generally open
+  return true;
+}
+
 // Mock data generator (since we can't directly pull from BabyPips in a client-side app)
 export const fetchCurrencyStrength = async (): Promise<CurrencyStrength[]> => {
   try {
+    // First check if markets are open
+    if (!isForexMarketOpen()) {
+      // Return empty array to indicate markets are closed
+      return [];
+    }
+    
     // In a real application, you would fetch this data from an API
     // For demo purposes, we'll generate realistic-looking mock data
     
