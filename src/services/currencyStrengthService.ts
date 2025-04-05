@@ -14,22 +14,28 @@ export const isForexMarketOpen = (): boolean => {
   const day = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
   const hours = now.getUTCHours();
   
+  console.log(`Checking market open status - Day: ${day}, Hour: ${hours} UTC`);
+  
   // Forex markets are closed on weekends
   if (day === 0 || day === 6) {
+    console.log("Markets closed: Weekend");
     return false;
   }
 
   // Special case for Friday - markets close earlier (around 21:00 UTC)
   if (day === 5 && hours >= 21) {
+    console.log("Markets closed: Friday after hours");
     return false;
   }
 
   // Special case for Sunday - markets open later (around 21:00 UTC in winter, 22:00 UTC in summer)
   if (day === 0 && hours < 21) {
+    console.log("Markets closed: Sunday before opening");
     return false;
   }
   
   // Otherwise markets are generally open
+  console.log("Markets open");
   return true;
 }
 

@@ -14,7 +14,7 @@ const DateInput: React.FC<DateInputProps> = ({ selectedDate }) => {
       <Label htmlFor="date">Date</Label>
       <Input 
         id="date" 
-        value={format(selectedDate, 'yyyy-MM-dd')} 
+        value={format(selectedDate, 'MMMM d, yyyy')} 
         disabled 
         className="bg-secondary/60 text-foreground"
       />
