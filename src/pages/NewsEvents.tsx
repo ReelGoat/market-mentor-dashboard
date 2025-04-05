@@ -3,6 +3,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import MainLayout from '@/components/layout/MainLayout';
 import EconomicCalendar from '@/components/news/EconomicCalendar';
+import CurrencyStrengthChart from '@/components/news/CurrencyStrengthChart';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,8 @@ const NewsEvents: React.FC = () => {
             Refresh
           </Button>
         </div>
+
+        <CurrencyStrengthChart />
 
         <Card className="bg-cardDark/50 border-border">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
