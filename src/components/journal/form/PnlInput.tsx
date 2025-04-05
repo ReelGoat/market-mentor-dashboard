@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, Calculator } from 'lucide-react';
@@ -24,21 +23,20 @@ const PnlInput: React.FC<PnlInputProps> = ({
   error 
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow positive numbers and decimals
     const value = e.target.value;
     // Allow empty input (for clearing) or valid numbers with optional decimal point
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+    if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
       onManualPnlChange(value);
     }
   };
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="pnl">P&L (USD)</Label>
       <div className="flex items-center space-x-2">
         <div className="relative flex-1">
           <Input
             id="pnl"
+            placeholder="Enter P&L (USD)"
             value={manualPnl}
             onChange={handleChange}
             className={cn(
