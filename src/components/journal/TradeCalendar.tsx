@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
@@ -32,19 +31,16 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
     new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   );
 
-  // Get the current date from the system when component mounts
+  // Get the current date when component mounts
   useEffect(() => {
-    // Create a new Date object to get the current date from the system
-    const systemDate = new Date(); // Using actual current date from system
-    
-    // Log the current system date for debugging
-    console.log("System date:", systemDate.toString());
+    // Get the actual current date from the system
+    const today = new Date();
     
     // Update selected date to today
-    onDateSelect(systemDate);
+    onDateSelect(today);
     
     // Update current month view to match
-    setCurrentMonth(new Date(systemDate.getFullYear(), systemDate.getMonth(), 1));
+    setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
   }, []);
 
   // Update month view whenever selectedDate changes to a different month
@@ -114,6 +110,13 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
     return "";
   };
 
+  const handleTodayClick = () => {
+    const today = new Date();
+    console.log("Today button clicked with actual date:", today.toString());
+    onDateSelect(today);
+    setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+  };
+
   return (
     <div className="bg-cardDark rounded-lg p-4 card-gradient">
       <div className="flex items-center justify-between mb-4">
@@ -173,12 +176,7 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
       {/* Today button */}
       <div className="mt-4 flex justify-center">
         <button
-          onClick={() => {
-            const today = new Date(); // Using actual current system date
-            console.log("Today button clicked, date:", today.toString());
-            onDateSelect(today);
-            setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-          }}
+          onClick={handleTodayClick}
           className="text-sm bg-primary text-primary-foreground px-4 py-1 rounded hover:bg-primary/90 transition-colors"
         >
           Today

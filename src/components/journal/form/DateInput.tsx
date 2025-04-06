@@ -46,7 +46,7 @@ const DateInput: React.FC<DateInputProps> = ({ selectedDate, onTimeChange }) => 
           />
         </div>
         <div>
-          <Label htmlFor="time">Time (UTC)</Label>
+          <Label htmlFor="time">Time (Local)</Label>
           <Input 
             id="time" 
             type="time"
@@ -57,7 +57,8 @@ const DateInput: React.FC<DateInputProps> = ({ selectedDate, onTimeChange }) => 
         </div>
       </div>
       <div className="text-xs text-muted-foreground italic">
-        Session: <span className="font-medium text-foreground">{currentSession}</span>
+        Session: <span className="font-medium text-foreground">{currentSession}</span> 
+        <span className="ml-2">(Based on UTC time)</span>
       </div>
     </div>
   );

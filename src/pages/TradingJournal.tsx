@@ -42,7 +42,8 @@ const TradingJournal: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date("2025-04-03")); // Set to April 3, 2025
+  // Use the actual current date as the default selected date
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showTradeForm, setShowTradeForm] = useState<boolean>(false);
   const [editTrade, setEditTrade] = useState<Trade | undefined>(undefined);
   const [isLoadingTrades, setIsLoadingTrades] = useState<boolean>(true);
