@@ -51,7 +51,7 @@ export const fetchTrades = async () => {
     notes: item.notes || "",
     screenshot: item.screenshot,
     direction: (item.direction as 'buy' | 'sell') || 'buy', // Type assertion to ensure correct union type
-    session: item.session || determineSession(new Date(item.date)), // Extract session or determine if missing
+    session: item.session || determineSession(new Date(item.date)), // Now using the session from the database
   }));
 };
 

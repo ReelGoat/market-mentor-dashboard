@@ -42,6 +42,7 @@ export type Database = {
           notes: string | null
           pnl: number
           screenshot: string | null
+          session: string | null
           symbol: string
           updated_at: string
           user_id: string | null
@@ -57,6 +58,7 @@ export type Database = {
           notes?: string | null
           pnl: number
           screenshot?: string | null
+          session?: string | null
           symbol: string
           updated_at?: string
           user_id?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           notes?: string | null
           pnl?: number
           screenshot?: string | null
+          session?: string | null
           symbol?: string
           updated_at?: string
           user_id?: string | null
