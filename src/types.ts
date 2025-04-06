@@ -1,3 +1,4 @@
+
 // Trade Types
 export interface Trade {
   id: string;
@@ -10,6 +11,7 @@ export interface Trade {
   notes: string;
   screenshot?: string; // Base64 or URL
   direction: 'buy' | 'sell'; // Trade direction
+  session?: string; // Trading session (Asian, European, American, Overnight)
 }
 
 // Calendar day status
@@ -31,6 +33,7 @@ export interface PerformanceMetrics {
   averageLoss: number;
   maxDrawdown: number;
   profitFactor: number;
+  sessionPerformance?: {[session: string]: {count: number, pnl: number, winRate: number}};
 }
 
 // Market categories

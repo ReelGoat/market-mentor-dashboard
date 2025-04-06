@@ -1,4 +1,3 @@
-
 import { Trade, EconomicEvent, DailySummary, PerformanceMetrics } from '../types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, parseISO, addDays } from 'date-fns';
 
@@ -95,42 +94,101 @@ export const calculatePerformanceMetrics = (trades: Trade[]): PerformanceMetrics
       averageLoss: 0,
       maxDrawdown: 0,
       profitFactor: 0,
+      sessionPerformance: {} // Add session performance
     };
   }
+
+  let totalPnl = 0;
+  let winCount = 0;
+  let lossCount = 0;
+  let totalWins = 0;
+  let totalLosses = 0;
+  const pnlChanges: number[] = [];
   
-  const totalPnl = trades.reduce((sum, trade) => sum + trade.pnl, 0);
-  const winningTrades = trades.filter(trade => trade.pnl > 0);
-  const losingTrades = trades.filter(trade => trade.pnl < 0);
-  
-  const winRate = winningTrades.length / trades.length * 100;
-  
-  const averageWin = winningTrades.length > 0 
-    ? winningTrades.reduce((sum, trade) => sum + trade.pnl, 0) / winningTrades.length 
-    : 0;
-    
-  const averageLoss = losingTrades.length > 0 
-    ? Math.abs(losingTrades.reduce((sum, trade) => sum + trade.pnl, 0) / losingTrades.length)
-    : 0;
-  
-  // Calculate drawdown (simplified)
-  let maxDrawdown = 0;
-  let peak = 0;
-  let balance = 0;
-  
-  trades.forEach(trade => {
-    balance += trade.pnl;
-    if (balance > peak) {
-      peak = balance;
+  // Track session performance
+  const sessionPerformance: {
+    [session: string]: {
+      count: number;
+      pnl: number;
+      wins: number;
     }
-    const drawdown = peak - balance;
-    if (drawdown > maxDrawdown) {
-      maxDrawdown = drawdown;
+  } = {};
+  
+  // Process all trades
+  trades.forEach(trade => {
+    const pnl = trade.pnl;
+    totalPnl += pnl;
+    
+    if (pnl > 0) {
+      winCount++;
+      totalWins += pnl;
+    } else if (pnl < 0) {
+      lossCount++;
+      totalLosses += Math.abs(pnl);
+    }
+    
+    pnlChanges.push(pnl);
+    
+    // Track session data
+    const session = trade.session || 'Unknown';
+    if (!sessionPerformance[session]) {
+      sessionPerformance[session] = {
+        count: 0,
+        pnl: 0,
+        wins: 0
+      };
+    }
+    
+    sessionPerformance[session].count++;
+    sessionPerformance[session].pnl += pnl;
+    if (pnl > 0) {
+      sessionPerformance[session].wins++;
     }
   });
   
-  const totalGain = winningTrades.reduce((sum, trade) => sum + trade.pnl, 0);
-  const totalLoss = Math.abs(losingTrades.reduce((sum, trade) => sum + trade.pnl, 0));
-  const profitFactor = totalLoss > 0 ? totalGain / totalLoss : totalGain;
+  // Calculate max drawdown
+  let peak = 0;
+  let maxDrawdown = 0;
+  let cumulativePnl = 0;
+  
+  pnlChanges.forEach(change => {
+    cumulativePnl += change;
+    
+    if (cumulativePnl > peak) {
+      peak = cumulativePnl;
+    } else {
+      const drawdown = peak - cumulativePnl;
+      maxDrawdown = Math.max(maxDrawdown, drawdown);
+    }
+  });
+  
+  // Calculate win rate
+  const winRate = trades.length > 0 ? (winCount / trades.length) * 100 : 0;
+  
+  // Calculate average win/loss
+  const averageWin = winCount > 0 ? totalWins / winCount : 0;
+  const averageLoss = lossCount > 0 ? totalLosses / lossCount : 0;
+  
+  // Calculate profit factor
+  const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0;
+
+  // Calculate session win rates
+  const processedSessionPerformance: {
+    [session: string]: {
+      count: number, 
+      pnl: number, 
+      winRate: number
+    }
+  } = {};
+  
+  Object.keys(sessionPerformance).forEach(session => {
+    const { count, pnl, wins } = sessionPerformance[session];
+    processedSessionPerformance[session] = {
+      count,
+      pnl,
+      winRate: count > 0 ? (wins / count) * 100 : 0
+    };
+  });
   
   return {
     totalPnl,
@@ -138,7 +196,8 @@ export const calculatePerformanceMetrics = (trades: Trade[]): PerformanceMetrics
     averageWin,
     averageLoss,
     maxDrawdown,
-    profitFactor: parseFloat(profitFactor.toFixed(2)),
+    profitFactor,
+    sessionPerformance: processedSessionPerformance
   };
 };
 

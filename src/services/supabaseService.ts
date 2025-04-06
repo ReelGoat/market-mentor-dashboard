@@ -51,7 +51,18 @@ export const fetchTrades = async () => {
     notes: item.notes || "",
     screenshot: item.screenshot,
     direction: (item.direction as 'buy' | 'sell') || 'buy', // Type assertion to ensure correct union type
+    session: item.session || determineSession(new Date(item.date)), // Extract session or determine if missing
   }));
+};
+
+// Helper function to determine session based on time
+const determineSession = (date: Date): string => {
+  const hour = date.getUTCHours();
+  
+  if (hour >= 0 && hour < 8) return 'Asian';
+  if (hour >= 8 && hour < 16) return 'European';
+  if (hour >= 16 && hour < 21) return 'American';
+  return 'Overnight';
 };
 
 export const saveTrade = async (trade: Trade) => {
@@ -72,6 +83,7 @@ export const saveTrade = async (trade: Trade) => {
     notes: trade.notes,
     screenshot: trade.screenshot,
     direction: safeDirection, // Use the safe direction
+    session: trade.session || determineSession(trade.date), // Include session
   };
 
   const { data, error } = await supabase

@@ -29,6 +29,9 @@ const TradeForm: React.FC<TradeFormProps> = ({
   onCancel,
   editTrade 
 }) => {
+  const [tradeDateTime, setTradeDateTime] = useState<Date>(
+    editTrade?.date || selectedDate
+  );
   const [symbol, setSymbol] = useState<string>(editTrade?.symbol || '');
   const [entryPrice, setEntryPrice] = useState<string>(editTrade?.entryPrice.toString() || '');
   const [exitPrice, setExitPrice] = useState<string>(editTrade?.exitPrice.toString() || '');
@@ -41,6 +44,22 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<MarketCategory>('forex');
   const [isPnlPositive, setIsPnlPositive] = useState<boolean>(editTrade ? editTrade.pnl >= 0 : true);
   const [manualPnl, setManualPnl] = useState<string>(editTrade ? Math.abs(editTrade.pnl).toString() : '');
+  const [session, setSession] = useState<string>('');
+
+  // Determine session when trade date/time changes
+  useEffect(() => {
+    const determineSession = (date: Date): string => {
+      const hour = date.getUTCHours();
+      
+      // Trading sessions (approximated based on common forex market hours)
+      if (hour >= 0 && hour < 8) return 'Asian';
+      if (hour >= 8 && hour < 16) return 'European';
+      if (hour >= 16 && hour < 21) return 'American';
+      return 'Overnight';
+    };
+    
+    setSession(determineSession(tradeDateTime));
+  }, [tradeDateTime]);
 
   // This function calculates PnL from trade parameters when the Calculate button is clicked
   const calculatePnl = () => {
@@ -94,7 +113,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
     
     const trade: Trade = {
       id: editTrade?.id || '',
-      date: selectedDate,
+      date: tradeDateTime,
       symbol,
       entryPrice: parseFloat(entryPrice),
       exitPrice: parseFloat(exitPrice),
@@ -102,7 +121,8 @@ const TradeForm: React.FC<TradeFormProps> = ({
       pnl,
       notes,
       screenshot,
-      direction
+      direction,
+      session  // Add session to the trade data
     };
     
     onSave(trade);
@@ -122,6 +142,11 @@ const TradeForm: React.FC<TradeFormProps> = ({
     setManualPnl(value);
   };
 
+  // Handle time changes
+  const handleTimeChange = (date: Date) => {
+    setTradeDateTime(date);
+  };
+
   return (
     <div className="bg-cardDark rounded-lg p-4 card-gradient">
       <div className="flex justify-between items-center mb-4">
@@ -135,7 +160,10 @@ const TradeForm: React.FC<TradeFormProps> = ({
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <DateInput selectedDate={selectedDate} />
+          <DateInput 
+            selectedDate={tradeDateTime} 
+            onTimeChange={handleTimeChange}
+          />
           <MarketCategorySelect 
             selectedCategory={selectedCategory} 
             onCategoryChange={setSelectedCategory} 

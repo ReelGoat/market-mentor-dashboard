@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import PerformanceChart from '@/components/analytics/PerformanceChart';
@@ -8,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Trash2, RefreshCw } from 'lucide-react';
+import { Trash2, RefreshCw, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   generateMockTrades, 
@@ -40,19 +39,16 @@ const Performance: React.FC = () => {
   const loadTradeData = async () => {
     setIsLoading(true);
     try {
-      // Try to load real trade data from Supabase
       if (user) {
         const tradesData = await fetchTrades();
         if (tradesData && tradesData.length > 0) {
           setTrades(tradesData);
           toast.success("Loaded trade data from your journal");
         } else {
-          // Fallback to mock data if no real trades exist
           setTrades(generateMockTrades());
           toast.info("Using sample trade data. Add trades in your Journal!");
         }
       } else {
-        // Use mock data when not authenticated
         setTrades(generateMockTrades());
       }
     } catch (error) {
@@ -71,7 +67,6 @@ const Performance: React.FC = () => {
   
   const metrics = calculatePerformanceMetrics(trades);
   
-  // Group trades by symbol for symbol performance
   const symbolPerformance: {
     [symbol: string]: {
       totalTrades: number;
@@ -102,18 +97,59 @@ const Performance: React.FC = () => {
     symbolPerformance[trade.symbol].totalPnl += trade.pnl;
   });
   
-  // Calculate win rate
   Object.keys(symbolPerformance).forEach(symbol => {
     const { totalTrades, winningTrades } = symbolPerformance[symbol];
     symbolPerformance[symbol].winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
   });
   
-  // Sort symbols by total P&L
   const sortedSymbols = Object.keys(symbolPerformance).sort(
     (a, b) => symbolPerformance[b].totalPnl - symbolPerformance[a].totalPnl
   );
 
-  // Get recent trades
+  const sessionPerformance: {
+    [session: string]: {
+      totalTrades: number;
+      winningTrades: number;
+      losingTrades: number;
+      totalPnl: number;
+      winRate: number;
+      averagePnl: number;
+    }
+  } = {};
+  
+  trades.forEach(trade => {
+    const session = trade.session || 'Unknown';
+    
+    if (!sessionPerformance[session]) {
+      sessionPerformance[session] = {
+        totalTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        totalPnl: 0,
+        winRate: 0,
+        averagePnl: 0
+      };
+    }
+    
+    sessionPerformance[session].totalTrades += 1;
+    if (trade.pnl > 0) {
+      sessionPerformance[session].winningTrades += 1;
+    } else if (trade.pnl < 0) {
+      sessionPerformance[session].losingTrades += 1;
+    }
+    sessionPerformance[session].totalPnl += trade.pnl;
+  });
+  
+  Object.keys(sessionPerformance).forEach(session => {
+    const { totalTrades, winningTrades, totalPnl } = sessionPerformance[session];
+    sessionPerformance[session].winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
+    sessionPerformance[session].averagePnl = totalTrades > 0 ? totalPnl / totalTrades : 0;
+  });
+  
+  const sortedSessions = Object.keys(sessionPerformance).sort(
+    (a, b) => sessionPerformance[b].totalPnl - sessionPerformance[a].totalPnl
+  );
+
   const recentTrades = [...trades]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
@@ -248,9 +284,9 @@ const Performance: React.FC = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Date</TableHead>
+                          <TableHead>Date & Time</TableHead>
                           <TableHead>Symbol</TableHead>
-                          <TableHead>Size</TableHead>
+                          <TableHead>Session</TableHead>
                           <TableHead className="text-right">P&L</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -258,9 +294,19 @@ const Performance: React.FC = () => {
                         {recentTrades.length > 0 ? (
                           recentTrades.map((trade) => (
                             <TableRow key={trade.id}>
-                              <TableCell>{format(new Date(trade.date), 'MMM d')}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span>{format(new Date(trade.date), 'MMM d')}</span>
+                                  <span className="text-xs text-muted-foreground">{format(new Date(trade.date), 'HH:mm')} UTC</span>
+                                </div>
+                              </TableCell>
                               <TableCell className="font-medium">{trade.symbol}</TableCell>
-                              <TableCell>{trade.lotSize.toFixed(2)}</TableCell>
+                              <TableCell>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {trade.session || 'Unknown'}
+                                </span>
+                              </TableCell>
                               <TableCell className={cn(
                                 "text-right font-medium",
                                 trade.pnl > 0 ? "text-profit" : trade.pnl < 0 ? "text-loss" : ""
@@ -283,6 +329,70 @@ const Performance: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+            
+            <Card className="bg-cardDark border-border">
+              <CardHeader>
+                <CardTitle>Session Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Trading Session</TableHead>
+                        <TableHead>Trades</TableHead>
+                        <TableHead>Win Rate</TableHead>
+                        <TableHead>Avg P&L</TableHead>
+                        <TableHead className="text-right">Total P&L</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedSessions.length > 0 ? (
+                        sortedSessions.map((session) => (
+                          <TableRow key={session}>
+                            <TableCell className="font-medium">
+                              <span className="flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                {session}
+                              </span>
+                            </TableCell>
+                            <TableCell>{sessionPerformance[session].totalTrades}</TableCell>
+                            <TableCell>{sessionPerformance[session].winRate.toFixed(1)}%</TableCell>
+                            <TableCell className={cn(
+                              sessionPerformance[session].averagePnl > 0 
+                                ? "text-profit" 
+                                : sessionPerformance[session].averagePnl < 0 
+                                  ? "text-loss" 
+                                  : ""
+                            )}>
+                              {sessionPerformance[session].averagePnl > 0 ? '+' : ''}
+                              {sessionPerformance[session].averagePnl.toFixed(2)} USD
+                            </TableCell>
+                            <TableCell className={cn(
+                              "text-right font-medium",
+                              sessionPerformance[session].totalPnl > 0 
+                                ? "text-profit" 
+                                : sessionPerformance[session].totalPnl < 0 
+                                  ? "text-loss" 
+                                  : ""
+                            )}>
+                              {sessionPerformance[session].totalPnl > 0 ? '+' : ''}
+                              {sessionPerformance[session].totalPnl.toFixed(2)} USD
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                            No session performance data available
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           </>
         )}
       </div>
