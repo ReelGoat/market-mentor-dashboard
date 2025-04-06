@@ -5,22 +5,22 @@ import MainLayout from '@/components/layout/MainLayout';
 import EconomicCalendar from '@/components/news/EconomicCalendar';
 import CurrencyStrengthChart from '@/components/news/CurrencyStrengthChart';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateMockEvents } from '@/utils/mockData';
 import { fetchAggregatedEconomicEvents } from '@/services/economicDataService';
 import { toast } from 'sonner';
 
 const NewsEvents: React.FC = () => {
-  // Set query to auto-refresh weekly (7 days in milliseconds)
-  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  // Set query to auto-refresh daily (24 hours in milliseconds)
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   
   const { data: economicEvents, isLoading, error, refetch } = useQuery({
     queryKey: ['economicEvents'],
     queryFn: fetchAggregatedEconomicEvents,
-    staleTime: ONE_WEEK_MS, // 1 week
-    refetchInterval: ONE_WEEK_MS, // Auto-refresh every week
-    retry: 1,
+    staleTime: ONE_DAY_MS, // 1 day
+    refetchInterval: ONE_DAY_MS, // Auto-refresh every day
+    retry: 2,
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 
@@ -53,6 +53,21 @@ const NewsEvents: React.FC = () => {
             Refresh
           </Button>
         </div>
+
+        <Card className="bg-cardDark/50 border-border">
+          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+            <Info className="h-5 w-5 text-blue-400" />
+            <CardTitle className="text-base">Data Source</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm">
+              <p>
+                Economic calendar data is sourced from BabyPips and other providers. 
+                The calendar shows important economic events that may impact financial markets.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <CurrencyStrengthChart />
 

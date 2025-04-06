@@ -1,6 +1,7 @@
 
 import { EconomicEvent, MarketCategory } from '@/types';
 import { fetchEconomicEvents as fetchForexFactoryEvents } from './forexFactoryService';
+import { fetchBabyPipsEvents } from './babyPipsService';
 import { toast } from 'sonner';
 
 // Helper function to categorize events based on currency and title
@@ -349,9 +350,11 @@ const fetchNewsApiEvents = async (): Promise<EconomicEvent[]> => {
 // Aggregate data from all sources
 export const fetchAggregatedEconomicEvents = async (): Promise<EconomicEvent[]> => {
   try {
-    // Fetch from all sources in parallel
+    // Fetch from all sources in parallel - prioritize BabyPips if available
     const results = await Promise.allSettled([
+      fetchBabyPipsEvents(),
       fetchForexFactoryEvents(),
+      // Only use mock data if BabyPips fails
       fetchInvestingComEvents(),
       fetchTradingEconomicsEvents(),
       fetchFxStreetEvents(),
@@ -365,13 +368,13 @@ export const fetchAggregatedEconomicEvents = async (): Promise<EconomicEvent[]> 
     
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
-        // Add source name to events that don't have it (like ForexFactory)
-        const sourceNames = ['ForexFactory', 'Investing.com', 'Trading Economics', 'FxStreet', 'Barchart', 'NewsAPI'];
+        // Add source name to events that don't have it
+        const sourceNames = ['BabyPips', 'ForexFactory', 'Investing.com', 'Trading Economics', 'FxStreet', 'Barchart', 'NewsAPI'];
         const events = result.value.map(event => ({
           ...event,
           source: event.source || sourceNames[index],
           // Add categories based on event details
-          categories: categorizeEvent({
+          categories: event.categories || categorizeEvent({
             ...event,
             source: event.source || sourceNames[index]
           })
@@ -383,8 +386,16 @@ export const fetchAggregatedEconomicEvents = async (): Promise<EconomicEvent[]> 
       }
     });
     
-    // Warn if some sources failed
-    if (errorCount > 0) {
+    // If BabyPips failed but we have other data, show a warning
+    if (results[0].status === 'rejected' && allEvents.length > 0) {
+      toast.warning('Failed to fetch data from BabyPips. Using alternative sources.');
+    }
+    // Warn if all sources failed
+    else if (errorCount >= results.length) {
+      toast.error('Failed to fetch economic events from all sources.');
+    }
+    // Warn if some sources failed but not all
+    else if (errorCount > 0) {
       toast.warning(`Failed to fetch data from ${errorCount} source${errorCount > 1 ? 's' : ''}`);
     }
     
