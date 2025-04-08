@@ -6,13 +6,15 @@ import TradeCalendar from '@/components/journal/TradeCalendar';
 import TradeForm from '@/components/journal/TradeForm';
 import TradeList from '@/components/journal/TradeList';
 import PerformanceMetrics from '@/components/analytics/PerformanceMetrics';
+import BalanceTracker from '@/components/analytics/BalanceTracker';
 import { Button } from "@/components/ui/button";
 import { 
   PlusCircle, 
   AlertTriangle,
-  Trash2
+  Trash2,
+  Settings
 } from 'lucide-react';
-import { Trade, DailySummary } from '@/types';
+import { Trade, DailySummary, TradingSettings } from '@/types';
 import { 
   generateDailySummaries,
   calculatePerformanceMetrics
@@ -23,7 +25,9 @@ import {
   fetchTrades, 
   saveTrade, 
   deleteTrade,
-  clearMonthTrades
+  clearMonthTrades,
+  saveSettings,
+  fetchSettings
 } from '@/services/supabaseService';
 import {
   AlertDialog,
@@ -36,6 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import BalanceSettingsDialog from '@/components/journal/BalanceSettingsDialog';
 
 const TradingJournal: React.FC = () => {
   const { toast } = useToast();
@@ -47,9 +52,14 @@ const TradingJournal: React.FC = () => {
   const [showTradeForm, setShowTradeForm] = useState<boolean>(false);
   const [editTrade, setEditTrade] = useState<Trade | undefined>(undefined);
   const [isLoadingTrades, setIsLoadingTrades] = useState<boolean>(true);
+  const [showBalanceSettings, setShowBalanceSettings] = useState<boolean>(false);
   
   const [trades, setTrades] = useState<Trade[]>([]);
   const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
+  const [tradingSettings, setTradingSettings] = useState<TradingSettings>({
+    initialBalance: 10000,
+    currency: 'USD'
+  });
   
   useEffect(() => {
     if (!isLoading && !user) {
@@ -66,6 +76,12 @@ const TradingJournal: React.FC = () => {
         const tradesData = await fetchTrades();
         setTrades(tradesData);
         setDailySummaries(generateDailySummaries(tradesData));
+        
+        // Load user settings
+        const settings = await fetchSettings();
+        if (settings) {
+          setTradingSettings(settings);
+        }
       } catch (error) {
         console.error("Error loading trades:", error);
         toast({
@@ -182,9 +198,29 @@ const TradingJournal: React.FC = () => {
       });
     }
   };
+
+  const handleSaveSettings = async (settings: TradingSettings) => {
+    try {
+      await saveSettings(settings);
+      setTradingSettings(settings);
+      setShowBalanceSettings(false);
+      
+      toast({
+        title: "Settings Saved",
+        description: "Your trading account balance has been updated.",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   
   const selectedDateTrades = getTradesForSelectedDate();
-  const performanceMetrics = calculatePerformanceMetrics(trades);
+  const performanceMetrics = calculatePerformanceMetrics(trades, tradingSettings.initialBalance);
 
   const currentMonthName = selectedDate.toLocaleString('default', { month: 'long' });
   const currentYear = selectedDate.getFullYear();
@@ -208,6 +244,13 @@ const TradingJournal: React.FC = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-6">
+          <BalanceTracker 
+            initialBalance={tradingSettings.initialBalance}
+            currency={tradingSettings.currency}
+            totalPnl={performanceMetrics.totalPnl}
+            onEditBalance={() => setShowBalanceSettings(true)}
+          />
+          
           <TradeCalendar 
             dailySummaries={dailySummaries} 
             selectedDate={selectedDate}
@@ -285,6 +328,13 @@ const TradingJournal: React.FC = () => {
           )}
         </div>
       </div>
+      
+      <BalanceSettingsDialog
+        open={showBalanceSettings}
+        onOpenChange={setShowBalanceSettings}
+        initialSettings={tradingSettings}
+        onSave={handleSaveSettings}
+      />
     </MainLayout>
   );
 };

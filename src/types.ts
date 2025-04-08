@@ -34,6 +34,9 @@ export interface PerformanceMetrics {
   maxDrawdown: number;
   profitFactor: number;
   sessionPerformance?: {[session: string]: {count: number, pnl: number, winRate: number}};
+  currentBalance?: number; // Added current balance field
+  initialBalance?: number; // Added initial balance field
+  balanceChange?: number; // Added balance change field (percentage)
 }
 
 // Market categories
@@ -72,4 +75,10 @@ export interface FilterOptions {
   sources?: string[];
   categories?: MarketCategory[];
   search?: string;
+}
+
+// User settings for trading
+export interface TradingSettings {
+  initialBalance: number; // Initial account balance
+  currency: string; // Account currency (USD, EUR, etc.)
 }

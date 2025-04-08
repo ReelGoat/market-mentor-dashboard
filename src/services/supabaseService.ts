@@ -1,132 +1,146 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { Trade } from "@/types";
-import { Database } from "@/integrations/supabase/types";
+import { supabase } from '@/integrations/supabase/client';
+import { Trade, TradingSettings } from '@/types';
 
-// Authentication
-export const signUp = async (email: string, password: string) => {
-  return await supabase.auth.signUp({
-    email,
-    password,
-  });
-};
-
-export const signIn = async (email: string, password: string) => {
-  return await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-};
-
-export const signOut = async () => {
-  return await supabase.auth.signOut();
-};
-
-export const getCurrentUser = async () => {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.user;
-};
-
-// Trade operations
-export const fetchTrades = async () => {
-  const { data, error } = await supabase
+// Fetch all trades for the authenticated user
+export const fetchTrades = async (): Promise<Trade[]> => {
+  const { data: tradesData, error } = await supabase
     .from('trades')
-    .select("*")
-    .order("date", { ascending: false });
-  
+    .select('*')
+    .order('date', { ascending: false });
+    
   if (error) {
     console.error("Error fetching trades:", error);
-    return [];
+    throw new Error(error.message);
   }
   
   // Transform database records to Trade objects
-  return data.map((item): Trade => ({
-    id: item.id,
-    date: new Date(item.date),
-    symbol: item.symbol,
-    entryPrice: parseFloat(item.entry_price.toString()),
-    exitPrice: parseFloat(item.exit_price.toString()),
-    lotSize: parseFloat(item.lot_size.toString()),
-    pnl: parseFloat(item.pnl.toString()),
-    notes: item.notes || "",
-    screenshot: item.screenshot,
-    direction: (item.direction as 'buy' | 'sell') || 'buy', // Type assertion to ensure correct union type
-    session: item.session || determineSession(new Date(item.date)), // Now using the session from the database
+  return tradesData.map(trade => ({
+    id: trade.id,
+    date: new Date(trade.date),
+    symbol: trade.symbol,
+    entryPrice: trade.entry_price,
+    exitPrice: trade.exit_price,
+    lotSize: trade.lot_size,
+    pnl: trade.pnl,
+    notes: trade.notes || '',
+    screenshot: trade.screenshot,
+    direction: trade.direction as 'buy' | 'sell',
+    session: trade.session
   }));
 };
 
-// Helper function to determine session based on time
-const determineSession = (date: Date): string => {
-  const hour = date.getUTCHours();
+// Save a trade (create or update)
+export const saveTrade = async (trade: Trade): Promise<void> => {
+  const { id, ...tradeData } = trade;
+  const user = supabase.auth.getUser();
   
-  if (hour >= 0 && hour < 8) return 'Asian';
-  if (hour >= 8 && hour < 16) return 'European';
-  if (hour >= 16 && hour < 21) return 'American';
-  return 'Overnight';
-};
-
-export const saveTrade = async (trade: Trade) => {
-  // Ensure direction is either 'buy' or 'sell'
-  const safeDirection: 'buy' | 'sell' = trade.direction === 'sell' ? 'sell' : 'buy';
-  
-  // Prepare trade data in the format expected by the database
-  const tradeData = {
-    // If id is empty or starts with 'trade-', omit it to let Supabase generate a UUID
-    ...(trade.id && !trade.id.startsWith('trade-') ? { id: trade.id } : {}),
-    user_id: (await getCurrentUser())?.id,
-    date: trade.date.toISOString(),
-    symbol: trade.symbol,
-    entry_price: trade.entryPrice,
-    exit_price: trade.exitPrice,
-    lot_size: trade.lotSize,
-    pnl: trade.pnl,
-    notes: trade.notes,
-    screenshot: trade.screenshot,
-    direction: safeDirection, // Use the safe direction
-    session: trade.session || determineSession(trade.date), // Include session
+  const tradeRecord = {
+    symbol: tradeData.symbol,
+    entry_price: tradeData.entryPrice,
+    exit_price: tradeData.exitPrice,
+    lot_size: tradeData.lotSize,
+    pnl: tradeData.pnl,
+    notes: tradeData.notes,
+    screenshot: tradeData.screenshot,
+    date: tradeData.date,
+    direction: tradeData.direction,
+    session: tradeData.session
   };
-
-  const { data, error } = await supabase
-    .from('trades')
-    .upsert(tradeData, { onConflict: "id" });
   
-  if (error) {
-    console.error("Error saving trade:", error);
-    throw error;
+  if (id) {
+    // Update existing trade
+    const { error } = await supabase
+      .from('trades')
+      .update(tradeRecord)
+      .eq('id', id);
+      
+    if (error) {
+      console.error("Error updating trade:", error);
+      throw new Error(error.message);
+    }
+  } else {
+    // Create new trade
+    const { error } = await supabase
+      .from('trades')
+      .insert([tradeRecord]);
+      
+    if (error) {
+      console.error("Error creating trade:", error);
+      throw new Error(error.message);
+    }
   }
-  
-  return data;
 };
 
-export const deleteTrade = async (tradeId: string) => {
+// Delete a trade
+export const deleteTrade = async (tradeId: string): Promise<void> => {
   const { error } = await supabase
     .from('trades')
     .delete()
-    .eq("id", tradeId);
-  
+    .eq('id', tradeId);
+    
   if (error) {
     console.error("Error deleting trade:", error);
-    throw error;
+    throw new Error(error.message);
   }
-  
-  return true;
 };
 
-export const clearMonthTrades = async (year: number, month: number) => {
-  // Create date range for the specified month
-  const startDate = new Date(year, month, 1).toISOString();
-  const endDate = new Date(year, month + 1, 0).toISOString();
+// Clear all trades for a specific month
+export const clearMonthTrades = async (year: number, month: number): Promise<void> => {
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0);
   
   const { error } = await supabase
     .from('trades')
     .delete()
-    .gte("date", startDate)
-    .lte("date", endDate);
-  
+    .gte('date', startDate.toISOString())
+    .lte('date', endDate.toISOString());
+    
   if (error) {
     console.error("Error clearing month trades:", error);
-    throw error;
+    throw new Error(error.message);
+  }
+};
+
+// Save user trading settings
+export const saveSettings = async (settings: TradingSettings): Promise<void> => {
+  const { error } = await supabase
+    .from('trading_settings')
+    .upsert([{
+      initial_balance: settings.initialBalance,
+      currency: settings.currency,
+      user_id: (await supabase.auth.getUser()).data.user?.id
+    }], {
+      onConflict: 'user_id'
+    });
+    
+  if (error) {
+    console.error("Error saving settings:", error);
+    throw new Error(error.message);
+  }
+};
+
+// Fetch user trading settings
+export const fetchSettings = async (): Promise<TradingSettings | null> => {
+  const { data, error } = await supabase
+    .from('trading_settings')
+    .select('*')
+    .single();
+    
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // No settings found, return default
+      return {
+        initialBalance: 10000,
+        currency: 'USD'
+      };
+    }
+    console.error("Error fetching settings:", error);
+    throw new Error(error.message);
   }
   
-  return true;
+  return {
+    initialBalance: data.initial_balance,
+    currency: data.currency
+  };
 };

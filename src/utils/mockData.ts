@@ -85,8 +85,8 @@ export const generateDailySummaries = (trades: Trade[]): DailySummary[] => {
 };
 
 // Calculate performance metrics
-export const calculatePerformanceMetrics = (trades: Trade[]): PerformanceMetrics => {
-  if (trades.length === 0) {
+export const calculatePerformanceMetrics = (trades: Trade[], initialBalance = 10000): PerformanceMetrics => {
+  if (!trades || trades.length === 0) {
     return {
       totalPnl: 0,
       winRate: 0,
@@ -94,7 +94,9 @@ export const calculatePerformanceMetrics = (trades: Trade[]): PerformanceMetrics
       averageLoss: 0,
       maxDrawdown: 0,
       profitFactor: 0,
-      sessionPerformance: {} // Add session performance
+      currentBalance: initialBalance,
+      initialBalance: initialBalance,
+      balanceChange: 0
     };
   }
 
@@ -106,13 +108,7 @@ export const calculatePerformanceMetrics = (trades: Trade[]): PerformanceMetrics
   const pnlChanges: number[] = [];
   
   // Track session performance
-  const sessionPerformance: {
-    [session: string]: {
-      count: number;
-      pnl: number;
-      wins: number;
-    }
-  } = {};
+  const sessionPerformance: {[session: string]: {count: number, pnl: number, wins: number}} = {};
   
   // Process all trades
   trades.forEach(trade => {
@@ -173,22 +169,20 @@ export const calculatePerformanceMetrics = (trades: Trade[]): PerformanceMetrics
   const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0;
 
   // Calculate session win rates
-  const processedSessionPerformance: {
-    [session: string]: {
-      count: number, 
-      pnl: number, 
-      winRate: number
-    }
-  } = {};
+  const formattedSessionPerformance: {[session: string]: {count: number, pnl: number, winRate: number}} = {};
   
   Object.keys(sessionPerformance).forEach(session => {
     const { count, pnl, wins } = sessionPerformance[session];
-    processedSessionPerformance[session] = {
+    formattedSessionPerformance[session] = {
       count,
       pnl,
       winRate: count > 0 ? (wins / count) * 100 : 0
     };
   });
+  
+  // Calculate current balance and balance change
+  const currentBalance = initialBalance + totalPnl;
+  const balanceChange = initialBalance > 0 ? (totalPnl / initialBalance) * 100 : 0;
   
   return {
     totalPnl,
@@ -197,7 +191,10 @@ export const calculatePerformanceMetrics = (trades: Trade[]): PerformanceMetrics
     averageLoss,
     maxDrawdown,
     profitFactor,
-    sessionPerformance: processedSessionPerformance
+    sessionPerformance: formattedSessionPerformance,
+    currentBalance,
+    initialBalance,
+    balanceChange
   };
 };
 
