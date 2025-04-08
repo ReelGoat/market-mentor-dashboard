@@ -49,34 +49,6 @@ export interface MarketSymbol {
   name?: string;
 }
 
-// Economic Event Type
-export interface EconomicEvent {
-  id: string;
-  title: string;
-  date: Date;
-  impact: 'high' | 'medium' | 'low';
-  forecast?: string;
-  previous?: string;
-  actual?: string;
-  currency: string;
-  description?: string;
-  source?: string;
-  categories?: MarketCategory[]; // Market categories affected by this event
-}
-
-// Filter options
-export interface FilterOptions {
-  dateRange: {
-    from: Date;
-    to: Date;
-  };
-  symbols?: string[];
-  impactLevels?: ('high' | 'medium' | 'low')[];
-  sources?: string[];
-  categories?: MarketCategory[];
-  search?: string;
-}
-
 // User settings for trading
 export interface TradingSettings {
   initialBalance: number; // Initial account balance
