@@ -111,8 +111,9 @@ export const saveSettings = async (settings: TradingSettings): Promise<void> => 
     throw new Error("User not authenticated");
   }
   
-  const { error } = await supabase
-    .from('trading_settings')
+  // Use any type to bypass TypeScript error until types are regenerated
+  const { error } = await (supabase
+    .from('trading_settings') as any)
     .upsert([{
       initial_balance: settings.initialBalance,
       currency: settings.currency,
@@ -129,8 +130,9 @@ export const saveSettings = async (settings: TradingSettings): Promise<void> => 
 
 // Fetch user trading settings
 export const fetchSettings = async (): Promise<TradingSettings | null> => {
-  const { data, error } = await supabase
-    .from('trading_settings')
+  // Use any type to bypass TypeScript error until types are regenerated
+  const { data, error } = await (supabase
+    .from('trading_settings') as any)
     .select('*')
     .single();
     
