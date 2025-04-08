@@ -43,7 +43,7 @@ export const saveTrade = async (trade: Trade): Promise<void> => {
     pnl: tradeData.pnl,
     notes: tradeData.notes,
     screenshot: tradeData.screenshot,
-    date: tradeData.date,
+    date: tradeData.date.toISOString(), // Convert Date to ISO string
     direction: tradeData.direction,
     session: tradeData.session
   };
@@ -104,12 +104,19 @@ export const clearMonthTrades = async (year: number, month: number): Promise<voi
 
 // Save user trading settings
 export const saveSettings = async (settings: TradingSettings): Promise<void> => {
+  const user = await supabase.auth.getUser();
+  const userId = user.data.user?.id;
+  
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  
   const { error } = await supabase
     .from('trading_settings')
     .upsert([{
       initial_balance: settings.initialBalance,
       currency: settings.currency,
-      user_id: (await supabase.auth.getUser()).data.user?.id
+      user_id: userId
     }], {
       onConflict: 'user_id'
     });
