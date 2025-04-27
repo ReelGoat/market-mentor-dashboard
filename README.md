@@ -1,69 +1,60 @@
-# Welcome to your Lovable project
+# Market Mentor Dashboard
 
-## Project info
+A comprehensive dashboard for market analysis and mentoring.
 
-**URL**: https://lovable.dev/projects/8b32efad-4cc6-44d8-99da-750a3f86c0b4
+## Features
 
-## How can I edit this code?
+- Real-time market data visualization
+- User authentication and authorization
+- Interactive charts and graphs
+- Responsive design for all devices
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- Frontend: React.js with TypeScript
+- Backend: Python with FastAPI
+- Database: PostgreSQL
+- Authentication: JWT
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8b32efad-4cc6-44d8-99da-750a3f86c0b4) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   # Frontend
+   cd frontend
+   npm install
 
-**Use your preferred IDE**
+   # Backend
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. Set up environment variables:
+   - Create `.env` files in both frontend and backend directories
+   - Add necessary environment variables
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+4. Run the development servers:
+   ```bash
+   # Frontend
+   cd frontend
+   npm run dev
 
-Follow these steps:
+   # Backend
+   cd backend
+   uvicorn main:app --reload
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Contributing
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-# Step 3: Install the necessary dependencies.
-npm i
+## License
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/8b32efad-4cc6-44d8-99da-750a3f86c0b4) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+This project is licensed under the MIT License - see the LICENSE file for details.

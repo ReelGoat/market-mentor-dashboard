@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -29,7 +28,7 @@ const Index: React.FC = () => {
             </div>
           </Link>
 
-          <Link to="/news" className="block">
+          <Link to="/calendar" className="block">
             <div className="bg-cardDark rounded-lg p-6 text-center h-full flex flex-col space-y-4 hover:bg-secondary/20 transition-colors border border-border">
               <h2 className="text-2xl font-semibold">Economic Calendar</h2>
               <p className="text-muted-foreground flex-grow">
