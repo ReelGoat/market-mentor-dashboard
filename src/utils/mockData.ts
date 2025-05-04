@@ -1,4 +1,5 @@
-import { Trade, EconomicEvent, DailySummary, PerformanceMetrics } from '../types';
+
+import { Trade, DailySummary, PerformanceMetrics } from '../types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, parseISO, addDays } from 'date-fns';
 
 // Sample currency pairs
@@ -196,52 +197,4 @@ export const calculatePerformanceMetrics = (trades: Trade[], initialBalance = 10
     initialBalance,
     balanceChange
   };
-};
-
-// Generate mock economic events
-export const generateMockEvents = (): EconomicEvent[] => {
-  const today = new Date();
-  const events: EconomicEvent[] = [];
-  
-  for (let i = -2; i <= 10; i++) {
-    const date = addDays(today, i);
-    const impactLevels: ('high' | 'medium' | 'low')[] = ['high', 'medium', 'low'];
-    const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF'];
-    
-    const numEvents = 1 + Math.floor(Math.random() * 3);
-    
-    for (let j = 0; j < numEvents; j++) {
-      const impact = impactLevels[Math.floor(Math.random() * impactLevels.length)];
-      const currency = currencies[Math.floor(Math.random() * currencies.length)];
-      
-      const titles = {
-        'USD': ['Non-Farm Payroll', 'GDP', 'CPI', 'FOMC Statement', 'Retail Sales'],
-        'EUR': ['ECB Rate Decision', 'German IFO', 'CPI Flash Estimate', 'Manufacturing PMI'],
-        'GBP': ['BOE Rate Decision', 'UK Employment Report', 'CPI', 'Retail Sales'],
-        'JPY': ['BOJ Outlook Report', 'Monetary Policy Statement', 'GDP', 'Trade Balance'],
-        'AUD': ['Employment Change', 'RBA Rate Decision', 'CPI', 'Retail Sales'],
-        'CAD': ['BOC Rate Decision', 'Employment Change', 'CPI', 'Retail Sales'],
-        'CHF': ['SNB Rate Decision', 'CPI', 'Retail Sales', 'GDP']
-      };
-      
-      const title = titles[currency as keyof typeof titles][Math.floor(Math.random() * titles[currency as keyof typeof titles].length)];
-      const forecast = (Math.random() * 5).toFixed(1) + '%';
-      const previous = (Math.random() * 5).toFixed(1) + '%';
-      const actual = i < 0 ? (Math.random() * 5).toFixed(1) + '%' : undefined;
-      
-      events.push({
-        id: `event-${i}-${j}`,
-        title,
-        date: new Date(date.setHours(9 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 60))),
-        impact,
-        forecast,
-        previous,
-        actual,
-        currency,
-        description: `${currency} ${title} data release`
-      });
-    }
-  }
-  
-  return events;
 };
