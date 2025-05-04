@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Trade, TradingSettings } from '@/types';
 
@@ -102,8 +103,8 @@ export const clearMonthTrades = async (year: number, month: number): Promise<voi
 
 // Save user trading settings
 export const saveSettings = async (settings: TradingSettings): Promise<void> => {
-  const { data: user } = await supabase.auth.getUser();
-  const userId = user?.id;
+  const { data } = await supabase.auth.getUser();
+  const userId = data?.user?.id;
   
   if (!userId) {
     throw new Error("User not authenticated");

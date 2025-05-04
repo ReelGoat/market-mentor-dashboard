@@ -1,6 +1,6 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LineChart,
   Line,
@@ -12,10 +12,17 @@ import {
 } from 'recharts';
 
 interface PerformanceChartProps {
-  data: { date: string; pnl: number }[];
+  data?: { date: string; pnl: number }[];
+  trades?: any[]; // Add trades prop to match what's passed in Performance.tsx
 }
 
-const PerformanceChart: React.FC<PerformanceChartProps> = ({ data }) => {
+const PerformanceChart: React.FC<PerformanceChartProps> = ({ data = [], trades = [] }) => {
+  // Transform trades into the required format if trades are provided and no data is provided
+  const chartData = data.length > 0 ? data : trades.map(trade => ({
+    date: new Date(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    pnl: trade.pnl
+  }));
+
   return (
     <Card>
       <CardHeader>
@@ -23,7 +30,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ data }) => {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
+          <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />

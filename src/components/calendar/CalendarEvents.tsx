@@ -1,3 +1,5 @@
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -98,7 +100,7 @@ export function CalendarEvents() {
       <CardContent>
         <ScrollArea className="h-[600px]">
           <div className="space-y-4">
-            {events.map((event, index) => (
+            {events.map((event: CalendarEvent, index: number) => (
               <div
                 key={index}
                 className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
