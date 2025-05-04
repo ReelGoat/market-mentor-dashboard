@@ -1,6 +1,6 @@
 
 import { Trade, DailySummary, PerformanceMetrics } from '../types';
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, parseISO, addDays } from 'date-fns';
+import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
 
 // Sample currency pairs
 export const currencyPairs = [

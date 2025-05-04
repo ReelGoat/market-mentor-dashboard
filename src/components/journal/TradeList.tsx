@@ -1,6 +1,4 @@
-
 import React from 'react';
-import { format } from 'date-fns';
 import { Trade } from '@/types';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

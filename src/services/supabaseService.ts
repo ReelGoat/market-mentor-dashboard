@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Trade, TradingSettings } from '@/types';
 
@@ -14,7 +13,7 @@ export const fetchTrades = async (): Promise<Trade[]> => {
     throw new Error(error.message);
   }
   
-  // Transform database records to Trade objects
+  // Transform database records to Trade objects with proper type handling for screenshot
   return tradesData.map(trade => ({
     id: trade.id,
     date: new Date(trade.date),
@@ -24,16 +23,15 @@ export const fetchTrades = async (): Promise<Trade[]> => {
     lotSize: trade.lot_size,
     pnl: trade.pnl,
     notes: trade.notes || '',
-    screenshot: trade.screenshot,
+    screenshot: trade.screenshot || undefined, // Convert null to undefined to match Trade type
     direction: trade.direction as 'buy' | 'sell',
-    session: trade.session
+    session: trade.session || undefined // Convert null to undefined
   }));
 };
 
 // Save a trade (create or update)
 export const saveTrade = async (trade: Trade): Promise<void> => {
   const { id, ...tradeData } = trade;
-  const user = supabase.auth.getUser();
   
   const tradeRecord = {
     symbol: tradeData.symbol,
@@ -104,8 +102,8 @@ export const clearMonthTrades = async (year: number, month: number): Promise<voi
 
 // Save user trading settings
 export const saveSettings = async (settings: TradingSettings): Promise<void> => {
-  const user = await supabase.auth.getUser();
-  const userId = user.data.user?.id;
+  const { data: user } = await supabase.auth.getUser();
+  const userId = user?.id;
   
   if (!userId) {
     throw new Error("User not authenticated");

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -10,9 +9,7 @@ import BalanceTracker from '@/components/analytics/BalanceTracker';
 import { Button } from "@/components/ui/button";
 import { 
   PlusCircle, 
-  AlertTriangle,
-  Trash2,
-  Settings
+  Trash2 
 } from 'lucide-react';
 import { Trade, DailySummary, TradingSettings } from '@/types';
 import { 
