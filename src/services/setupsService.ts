@@ -1,8 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
 // Define the TradingSetup interface
-interface TradingSetup {
+export interface TradingSetup {
   id?: string;
   name: string;
   description: string;
@@ -13,6 +14,8 @@ interface TradingSetup {
   notes: string;
   imageUrl?: string;
 }
+
+type SetupRow = Database['public']['Tables']['trading_setups']['Row'];
 
 // Fetch all trading setups for the authenticated user
 export const fetchSetups = async (): Promise<TradingSetup[]> => {
@@ -25,7 +28,7 @@ export const fetchSetups = async (): Promise<TradingSetup[]> => {
   const { data, error } = await supabase
     .from('trading_setups')
     .select('*')
-    .order('created_at', { ascending: false }) as { data: any[], error: any };
+    .order('created_at', { ascending: false });
   
   if (error) {
     console.error("Error fetching setups:", error);
@@ -33,7 +36,7 @@ export const fetchSetups = async (): Promise<TradingSetup[]> => {
   }
   
   // Transform database records to TradingSetup objects
-  return data.map(setup => ({
+  return (data || []).map((setup: SetupRow) => ({
     id: setup.id,
     name: setup.name,
     description: setup.description || '',
@@ -66,30 +69,26 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
     user_id: user.user.id
   };
   
-  let data, error;
+  let response;
   
   if (setup.id) {
     // Update existing setup
-    const response = await supabase
+    response = await supabase
       .from('trading_setups')
       .update(setupRecord)
       .eq('id', setup.id)
       .select('*')
-      .single() as { data: any, error: any };
-      
-    data = response.data;
-    error = response.error;
+      .single();
   } else {
     // Create new setup
-    const response = await supabase
+    response = await supabase
       .from('trading_setups')
       .insert([setupRecord])
       .select('*')
-      .single() as { data: any, error: any };
-      
-    data = response.data;
-    error = response.error;
+      .single();
   }
+  
+  const { data, error } = response;
   
   if (error) {
     console.error("Error saving setup:", error);
@@ -119,7 +118,7 @@ export const deleteSetup = async (setupId: string): Promise<void> => {
   const { error } = await supabase
     .from('trading_setups')
     .delete()
-    .eq('id', setupId) as { error: any };
+    .eq('id', setupId);
     
   if (error) {
     console.error("Error deleting setup:", error);
@@ -133,7 +132,7 @@ export const getSetupById = async (setupId: string): Promise<TradingSetup | null
     .from('trading_setups')
     .select('*')
     .eq('id', setupId)
-    .single() as { data: any, error: any };
+    .single();
     
   if (error) {
     console.error("Error fetching setup:", error);
