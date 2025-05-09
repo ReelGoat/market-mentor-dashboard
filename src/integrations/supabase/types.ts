@@ -108,6 +108,51 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_setups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          market_type: string
+          name: string
+          notes: string | null
+          risk_reward: number
+          timeframe: string
+          updated_at: string
+          user_id: string
+          win_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          market_type: string
+          name: string
+          notes?: string | null
+          risk_reward: number
+          timeframe: string
+          updated_at?: string
+          user_id: string
+          win_rate: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          market_type?: string
+          name?: string
+          notes?: string | null
+          risk_reward?: number
+          timeframe?: string
+          updated_at?: string
+          user_id?: string
+          win_rate?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

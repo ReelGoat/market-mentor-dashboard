@@ -25,7 +25,7 @@ export const fetchSetups = async (): Promise<TradingSetup[]> => {
   const { data, error } = await supabase
     .from('trading_setups')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false }) as { data: any[], error: any };
   
   if (error) {
     console.error("Error fetching setups:", error);
@@ -75,7 +75,7 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
       .update(setupRecord)
       .eq('id', setup.id)
       .select('*')
-      .single();
+      .single() as { data: any, error: any };
       
     data = response.data;
     error = response.error;
@@ -85,7 +85,7 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
       .from('trading_setups')
       .insert([setupRecord])
       .select('*')
-      .single();
+      .single() as { data: any, error: any };
       
     data = response.data;
     error = response.error;
@@ -94,6 +94,10 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
   if (error) {
     console.error("Error saving setup:", error);
     throw new Error(error.message);
+  }
+  
+  if (!data) {
+    throw new Error("No data returned from saving setup");
   }
   
   // Transform database record to TradingSetup object
@@ -115,7 +119,7 @@ export const deleteSetup = async (setupId: string): Promise<void> => {
   const { error } = await supabase
     .from('trading_setups')
     .delete()
-    .eq('id', setupId);
+    .eq('id', setupId) as { error: any };
     
   if (error) {
     console.error("Error deleting setup:", error);
@@ -129,7 +133,7 @@ export const getSetupById = async (setupId: string): Promise<TradingSetup | null
     .from('trading_setups')
     .select('*')
     .eq('id', setupId)
-    .single();
+    .single() as { data: any, error: any };
     
   if (error) {
     console.error("Error fetching setup:", error);
