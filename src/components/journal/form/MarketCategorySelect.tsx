@@ -21,11 +21,11 @@ const MarketCategorySelect: React.FC<MarketCategorySelectProps> = ({
 }) => {
   const marketCategories: { label: string; value: MarketCategory }[] = [
     { label: 'Forex', value: 'forex' },
-    { label: 'Metals', value: 'metals' },
     { label: 'Crypto', value: 'crypto' },
-    { label: 'Indices', value: 'indices' },
     { label: 'Stocks', value: 'stocks' },
+    { label: 'Indices', value: 'indices' },
     { label: 'Commodities', value: 'commodities' },
+    { label: 'Metals', value: 'metals' },
   ];
 
   return (

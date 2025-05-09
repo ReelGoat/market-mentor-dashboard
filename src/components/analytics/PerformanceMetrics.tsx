@@ -100,7 +100,7 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics, classN
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-loss">
-            {metrics.maxDrawdown.toFixed(2)} USD
+            {(metrics.maxDrawdown || 0).toFixed(2)} USD
           </div>
           <CardDescription>Maximum capital drawdown</CardDescription>
         </CardContent>

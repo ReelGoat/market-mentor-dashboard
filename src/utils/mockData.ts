@@ -1,5 +1,5 @@
 
-import { Trade, DailySummary, PerformanceMetrics } from '../types';
+import { Trade, DailySummary, PerformanceMetrics } from '@/types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
 
 // Sample currency pairs
@@ -79,8 +79,8 @@ export const generateDailySummaries = (trades: Trade[]): DailySummary[] => {
     return {
       date: day,
       status,
-      trades: dayTrades,
-      totalPnl
+      trades: dayTrades.length,
+      pnl: totalPnl
     };
   });
 };
@@ -95,9 +95,9 @@ export const calculatePerformanceMetrics = (trades: Trade[], initialBalance = 10
       averageLoss: 0,
       maxDrawdown: 0,
       profitFactor: 0,
-      currentBalance: initialBalance,
-      initialBalance: initialBalance,
-      balanceChange: 0
+      numberOfTrades: 0,
+      profitableTrades: 0,
+      losingTrades: 0
     };
   }
 
@@ -195,6 +195,9 @@ export const calculatePerformanceMetrics = (trades: Trade[], initialBalance = 10
     sessionPerformance: formattedSessionPerformance,
     currentBalance,
     initialBalance,
-    balanceChange
+    balanceChange,
+    numberOfTrades: trades.length,
+    profitableTrades: winCount,
+    losingTrades: lossCount
   };
 };

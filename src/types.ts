@@ -1,3 +1,4 @@
+
 // Update the Trade interface to include a setupId field
 export interface Trade {
   id: string;
@@ -14,7 +15,13 @@ export interface Trade {
   setupId?: string; // Add reference to the setup
 }
 
-export type MarketCategory = 'forex' | 'crypto' | 'stocks' | 'indices' | 'commodities';
+export type MarketCategory = 'forex' | 'crypto' | 'stocks' | 'indices' | 'commodities' | 'metals';
+
+export interface MarketSymbol {
+  symbol: string;
+  category: string;
+  name: string;
+}
 
 export interface DailySummary {
   date: Date;
@@ -23,17 +30,22 @@ export interface DailySummary {
   status: 'profit' | 'loss' | 'neutral' | 'no-trade';
 }
 
-export interface PerformanceData {
+export interface PerformanceMetrics {
   totalPnl: number;
   winRate: number;
   profitFactor: number;
   averageWin: number;
   averageLoss: number;
-  bestTrade: number;
-  worstTrade: number;
+  bestTrade?: number;
+  worstTrade?: number;
   numberOfTrades: number;
-  profitableTrades: number;
-  losingTrades: number;
+  profitableTrades?: number;
+  losingTrades?: number;
+  maxDrawdown?: number;
+  sessionPerformance?: {[session: string]: {count: number, pnl: number, winRate: number}};
+  currentBalance?: number;
+  initialBalance?: number;
+  balanceChange?: number;
 }
 
 export interface TradingSettings {

@@ -43,6 +43,7 @@ export type Database = {
           pnl: number
           screenshot: string | null
           session: string | null
+          setup_id: string | null
           symbol: string
           updated_at: string
           user_id: string | null
@@ -59,6 +60,7 @@ export type Database = {
           pnl: number
           screenshot?: string | null
           session?: string | null
+          setup_id?: string | null
           symbol: string
           updated_at?: string
           user_id?: string | null
@@ -75,11 +77,20 @@ export type Database = {
           pnl?: number
           screenshot?: string | null
           session?: string | null
+          setup_id?: string | null
           symbol?: string
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trades_setup_id_fkey"
+            columns: ["setup_id"]
+            isOneToOne: false
+            referencedRelation: "trading_setups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trading_settings: {
         Row: {
