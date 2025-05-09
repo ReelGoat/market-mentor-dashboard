@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -215,6 +216,10 @@ const TradingJournal: React.FC = () => {
       });
     }
   };
+
+  const handleNavigateToSetup = () => {
+    navigate('/setups');
+  };
   
   const selectedDateTrades = getTradesForSelectedDate();
   const performanceMetrics = calculatePerformanceMetrics(trades, tradingSettings.initialBalance);
@@ -263,6 +268,14 @@ const TradingJournal: React.FC = () => {
               Trades for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </h2>
             <div className="flex space-x-2">
+              <Button 
+                variant="outline"
+                onClick={handleNavigateToSetup}
+                className="border-primary hover:bg-primary/10"
+              >
+                View Setups
+              </Button>
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -295,7 +308,7 @@ const TradingJournal: React.FC = () => {
               
               <Button 
                 onClick={handleAddTrade} 
-                className="bg-secondary hover:bg-secondary/70"
+                className="bg-green-500 hover:bg-green-600 text-white"
                 disabled={showTradeForm}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
