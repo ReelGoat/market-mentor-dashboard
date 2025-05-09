@@ -26,7 +26,8 @@ export const fetchTrades = async (): Promise<Trade[]> => {
     notes: trade.notes || '',
     screenshot: trade.screenshot || undefined, // Convert null to undefined to match Trade type
     direction: trade.direction as 'buy' | 'sell',
-    session: trade.session || undefined // Convert null to undefined
+    session: trade.session || undefined, // Convert null to undefined
+    setupId: trade.setup_id || undefined // Add reference to the setup
   }));
 };
 
@@ -44,7 +45,8 @@ export const saveTrade = async (trade: Trade): Promise<void> => {
     screenshot: tradeData.screenshot,
     date: tradeData.date.toISOString(), // Convert Date to ISO string
     direction: tradeData.direction,
-    session: tradeData.session
+    session: tradeData.session,
+    setup_id: tradeData.setupId // Add reference to setup
   };
   
   if (id) {

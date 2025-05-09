@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Trade, MarketCategory } from '@/types';
 import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
+import { TradingSetup } from '@/services/setupsService';
 
-// Import our new components
+// Import our components
 import DateInput from './form/DateInput';
 import MarketCategorySelect from './form/MarketCategorySelect';
 import SymbolSelect from './form/SymbolSelect';
@@ -15,6 +15,7 @@ import PnlInput from './form/PnlInput';
 import TradeNotes from './form/TradeNotes';
 import ScreenshotUpload from './form/ScreenshotUpload';
 import FormActions from './form/FormActions';
+import SetupSelect from './form/SetupSelect';
 
 interface TradeFormProps {
   selectedDate: Date;
@@ -45,6 +46,7 @@ const TradeForm: React.FC<TradeFormProps> = ({
   const [isPnlPositive, setIsPnlPositive] = useState<boolean>(editTrade ? editTrade.pnl >= 0 : true);
   const [manualPnl, setManualPnl] = useState<string>(editTrade ? Math.abs(editTrade.pnl).toString() : '');
   const [session, setSession] = useState<string>('');
+  const [selectedSetup, setSelectedSetup] = useState<TradingSetup | null>(null);
 
   // Determine session when trade date/time changes
   useEffect(() => {
@@ -60,6 +62,23 @@ const TradeForm: React.FC<TradeFormProps> = ({
     
     setSession(determineSession(tradeDateTime));
   }, [tradeDateTime]);
+
+  // Apply trading setup when selected
+  const handleSetupSelect = (setup: TradingSetup | null) => {
+    setSelectedSetup(setup);
+    
+    if (setup) {
+      // Apply setup defaults to the trade form
+      setSelectedCategory(setup.marketType as MarketCategory);
+      setNotes(prev => {
+        if (prev && prev.trim() !== '') {
+          return `${prev}\n\nUsing setup: ${setup.name}\n${setup.notes}`;
+        } else {
+          return `Using setup: ${setup.name}\n${setup.notes}`;
+        }
+      });
+    }
+  };
 
   // This function calculates PnL from trade parameters when the Calculate button is clicked
   const calculatePnl = () => {
@@ -122,7 +141,8 @@ const TradeForm: React.FC<TradeFormProps> = ({
       notes,
       screenshot,
       direction,
-      session  // Add session to the trade data
+      session,
+      setupId: selectedSetup?.id
     };
     
     onSave(trade);
@@ -131,7 +151,6 @@ const TradeForm: React.FC<TradeFormProps> = ({
   // Handlers for individual components
   const handleLotSizeChange = (value: string) => {
     setLotSize(value);
-    // No automatic PnL calculation here
   };
   
   const handleTogglePnlSign = () => {
@@ -142,7 +161,6 @@ const TradeForm: React.FC<TradeFormProps> = ({
     setManualPnl(value);
   };
 
-  // Handle time changes
   const handleTimeChange = (date: Date) => {
     setTradeDateTime(date);
   };
@@ -168,6 +186,14 @@ const TradeForm: React.FC<TradeFormProps> = ({
             selectedCategory={selectedCategory} 
             onCategoryChange={setSelectedCategory} 
           />
+        </div>
+
+        {/* Add Trading Setup Selection */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-300">
+            Trading Setup (Optional)
+          </label>
+          <SetupSelect onSetupSelect={handleSetupSelect} />
         </div>
         
         <SymbolSelect 
