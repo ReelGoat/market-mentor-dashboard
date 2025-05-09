@@ -3,6 +3,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Clock } from 'lucide-react';
 
 interface DateInputProps {
   selectedDate: Date;
@@ -32,6 +33,7 @@ const DateInput: React.FC<DateInputProps> = ({ selectedDate, onTimeChange }) => 
   
   const currentSession = determineSession(selectedDate);
   const timeString = format(selectedDate, 'HH:mm');
+  const formattedFullTime = format(selectedDate, 'MMMM d, yyyy HH:mm');
 
   return (
     <div className="space-y-2">
@@ -46,7 +48,11 @@ const DateInput: React.FC<DateInputProps> = ({ selectedDate, onTimeChange }) => 
           />
         </div>
         <div>
-          <Label htmlFor="time">Time (Local)</Label>
+          <Label htmlFor="time">
+            <span className="flex items-center gap-1">
+              <Clock className="h-4 w-4" /> Time (Local)
+            </span>
+          </Label>
           <Input 
             id="time" 
             type="time"
@@ -56,9 +62,14 @@ const DateInput: React.FC<DateInputProps> = ({ selectedDate, onTimeChange }) => 
           />
         </div>
       </div>
-      <div className="text-xs text-muted-foreground italic">
-        Session: <span className="font-medium text-foreground">{currentSession}</span> 
-        <span className="ml-2">(Based on UTC time)</span>
+      <div className="flex flex-col text-xs space-y-1">
+        <div className="text-muted-foreground">
+          <span className="font-medium text-foreground">Full datetime:</span> {formattedFullTime}
+        </div>
+        <div className="text-muted-foreground italic">
+          Session: <span className="font-medium text-foreground">{currentSession}</span> 
+          <span className="ml-2">(Based on UTC time)</span>
+        </div>
       </div>
     </div>
   );
