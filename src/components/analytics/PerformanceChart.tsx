@@ -13,7 +13,7 @@ import {
 
 interface PerformanceChartProps {
   data?: { date: string; pnl: number }[];
-  trades?: any[]; // Add trades prop to match what's passed in Performance.tsx
+  trades?: any[]; // Support for trades prop
 }
 
 const PerformanceChart: React.FC<PerformanceChartProps> = ({ data = [], trades = [] }) => {
