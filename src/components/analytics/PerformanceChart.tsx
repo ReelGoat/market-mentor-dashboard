@@ -51,7 +51,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ data = [], trades =
             />
             <YAxis />
             <Tooltip 
-              formatter={(value, name) => [
+              formatter={(value) => [
                 `${Number(value) > 0 ? '+' : ''}${Number(value).toFixed(2)}`, 
                 'P&L'
               ]}
