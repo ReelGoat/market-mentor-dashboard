@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Menu, X, BarChart3, Calendar, FileClock, PieChart } from 'lucide-react';
+import { Menu, X, BarChart3, Calendar, Book, PieChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLocation, useNavigate } from 'react-router-dom';
 import InstallPrompt from './InstallPrompt';
@@ -24,9 +25,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       path: '/journal',
     },
     {
-      name: 'News & Events',
-      icon: <FileClock className="h-5 w-5" />,
-      path: '/news',
+      name: 'Strategy & Rules',
+      icon: <Book className="h-5 w-5" />,
+      path: '/strategy',
     },
     {
       name: 'Performance',

@@ -9,7 +9,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import TradingJournal from "./pages/TradingJournal";
 import TradingSetups from "./pages/TradingSetups";
-import Calendar from "./pages/Calendar";
+import StrategyRules from "./pages/StrategyRules";
 import Performance from "./pages/Performance";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -35,7 +35,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/journal" element={<TradingJournal />} />
               <Route path="/setups" element={<TradingSetups />} />
-              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/strategy" element={<StrategyRules />} />
               <Route path="/performance" element={<Performance />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="*" element={<NotFound />} />
