@@ -179,6 +179,7 @@ const TradingJournal: React.FC = () => {
     try {
       await clearMonthTrades(currentYear, currentMonth);
       
+      // Reload trades after clearing
       const updatedTrades = await fetchTrades();
       setTrades(updatedTrades);
       setDailySummaries(generateDailySummaries(updatedTrades));

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
@@ -30,18 +31,6 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
   const [currentMonth, setCurrentMonth] = useState<Date>(
     new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   );
-
-  // Get the current date when component mounts
-  useEffect(() => {
-    // Get the actual current date from the system
-    const today = new Date();
-    
-    // Update selected date to today
-    onDateSelect(today);
-    
-    // Update current month view to match
-    setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-  }, []);
 
   // Update month view whenever selectedDate changes to a different month
   useEffect(() => {
@@ -112,7 +101,6 @@ const TradeCalendar: React.FC<TradeCalendarProps> = ({
 
   const handleTodayClick = () => {
     const today = new Date();
-    console.log("Today button clicked with actual date:", today.toString());
     onDateSelect(today);
     setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
   };

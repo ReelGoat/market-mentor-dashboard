@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
+import { MarketCategory } from '@/types';
 
 // Define the TradingSetup interface
 export interface TradingSetup {
@@ -17,6 +18,14 @@ export interface TradingSetup {
 
 type SetupRow = Database['public']['Tables']['trading_setups']['Row'];
 
+// Type guard to ensure a setup is valid
+const isValidSetup = (setup: any): setup is SetupRow => {
+  return setup && 
+    typeof setup.id === 'string' && 
+    typeof setup.name === 'string' && 
+    typeof setup.market_type === 'string';
+};
+
 // Fetch all trading setups for the authenticated user
 export const fetchSetups = async (): Promise<TradingSetup[]> => {
   const { data: user } = await supabase.auth.getUser();
@@ -25,8 +34,9 @@ export const fetchSetups = async (): Promise<TradingSetup[]> => {
     throw new Error("User not authenticated");
   }
   
+  // Use type assertion to tell TypeScript that 'trading_setups' is valid
   const { data, error } = await supabase
-    .from('trading_setups')
+    .from('trading_setups' as any)
     .select('*')
     .order('created_at', { ascending: false });
   
@@ -36,17 +46,24 @@ export const fetchSetups = async (): Promise<TradingSetup[]> => {
   }
   
   // Transform database records to TradingSetup objects
-  return (data || []).map((setup: SetupRow) => ({
-    id: setup.id,
-    name: setup.name,
-    description: setup.description || '',
-    marketType: setup.market_type,
-    timeframe: setup.timeframe,
-    riskReward: setup.risk_reward,
-    winRate: setup.win_rate,
-    notes: setup.notes || '',
-    imageUrl: setup.image_url || undefined
-  }));
+  return (data || []).map((setup: any) => {
+    if (!isValidSetup(setup)) {
+      console.error("Invalid setup data:", setup);
+      throw new Error("Invalid setup data received from database");
+    }
+    
+    return {
+      id: setup.id,
+      name: setup.name,
+      description: setup.description || '',
+      marketType: setup.market_type,
+      timeframe: setup.timeframe,
+      riskReward: setup.risk_reward,
+      winRate: setup.win_rate,
+      notes: setup.notes || '',
+      imageUrl: setup.image_url || undefined
+    };
+  });
 };
 
 // Save a trading setup (create or update)
@@ -74,7 +91,7 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
   if (setup.id) {
     // Update existing setup
     response = await supabase
-      .from('trading_setups')
+      .from('trading_setups' as any)
       .update(setupRecord)
       .eq('id', setup.id)
       .select('*')
@@ -82,7 +99,7 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
   } else {
     // Create new setup
     response = await supabase
-      .from('trading_setups')
+      .from('trading_setups' as any)
       .insert([setupRecord])
       .select('*')
       .single();
@@ -97,6 +114,11 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
   
   if (!data) {
     throw new Error("No data returned from saving setup");
+  }
+
+  if (!isValidSetup(data)) {
+    console.error("Invalid setup data returned:", data);
+    throw new Error("Invalid setup data returned from saving");
   }
   
   // Transform database record to TradingSetup object
@@ -116,7 +138,7 @@ export const saveSetup = async (setup: TradingSetup): Promise<TradingSetup> => {
 // Delete a trading setup
 export const deleteSetup = async (setupId: string): Promise<void> => {
   const { error } = await supabase
-    .from('trading_setups')
+    .from('trading_setups' as any)
     .delete()
     .eq('id', setupId);
     
@@ -129,7 +151,7 @@ export const deleteSetup = async (setupId: string): Promise<void> => {
 // Get a specific setup by ID
 export const getSetupById = async (setupId: string): Promise<TradingSetup | null> => {
   const { data, error } = await supabase
-    .from('trading_setups')
+    .from('trading_setups' as any)
     .select('*')
     .eq('id', setupId)
     .single();
@@ -141,6 +163,11 @@ export const getSetupById = async (setupId: string): Promise<TradingSetup | null
   
   if (!data) {
     return null;
+  }
+
+  if (!isValidSetup(data)) {
+    console.error("Invalid setup data returned:", data);
+    throw new Error("Invalid setup data returned from database");
   }
   
   // Transform database record to TradingSetup object

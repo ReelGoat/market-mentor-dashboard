@@ -1,476 +1,442 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Save, ArrowLeft } from 'lucide-react';
-import { fetchSetups, saveSetup, deleteSetup } from '@/services/setupsService';
-
-interface TradingSetup {
-  id?: string;
-  name: string;
-  description: string;
-  marketType: string;
-  timeframe: string;
-  riskReward: number;
-  winRate: number;
-  notes: string;
-  imageUrl?: string;
-}
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { TradingSetup, fetchSetups, saveSetup, deleteSetup } from '@/services/setupsService';
+import { Plus, Edit, Trash2 } from 'lucide-react';
+import { MarketCategory } from '@/types';
 
 const TradingSetups: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
-  
+  const { user, isLoading: isAuthLoading } = useAuth();
+
+  const [isLoading, setIsLoading] = useState(true);
   const [setups, setSetups] = useState<TradingSetup[]>([]);
-  const [isLoadingSetups, setIsLoadingSetups] = useState<boolean>(true);
-  const [selectedSetup, setSelectedSetup] = useState<TradingSetup | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  
-  const [formData, setFormData] = useState<TradingSetup>({
-    name: '',
-    description: '',
-    marketType: 'forex',
-    timeframe: 'H1',
-    riskReward: 2,
-    winRate: 50,
-    notes: ''
-  });
+  const [currentTab, setCurrentTab] = useState<string>('list');
+  const [editingSetup, setEditingSetup] = useState<TradingSetup | null>(null);
+
+  // Form fields
+  const [setupName, setSetupName] = useState('');
+  const [setupDescription, setSetupDescription] = useState('');
+  const [marketType, setMarketType] = useState<string>('forex');
+  const [timeframe, setTimeframe] = useState('H1');
+  const [riskReward, setRiskReward] = useState('2');
+  const [winRate, setWinRate] = useState('60');
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isAuthLoading && !user) {
       navigate('/auth');
+      return;
     }
-  }, [user, isLoading, navigate]);
 
-  useEffect(() => {
-    const loadSetups = async () => {
-      setIsLoadingSetups(true);
-      try {
-        // This is a placeholder - setupsService needs to be implemented
-        const setupsData = await fetchSetups();
-        setSetups(setupsData || []);
-      } catch (error) {
-        console.error("Error loading setups:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load your trading setups. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingSetups(false);
-      }
-    };
+    loadSetups();
+  }, [user, isAuthLoading, navigate]);
 
-    if (user) {
-      loadSetups();
+  const loadSetups = async () => {
+    try {
+      setIsLoading(true);
+      const data = await fetchSetups();
+      setSetups(data);
+    } catch (error) {
+      console.error("Error loading setups:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load trading setups.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, [user, toast]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const numValue = parseFloat(value);
-    setFormData(prev => ({ ...prev, [name]: isNaN(numValue) ? 0 : numValue }));
-  };
-
-  const handleCreateNew = () => {
-    setIsEditing(true);
-    setSelectedSetup(null);
-    setFormData({
-      name: '',
-      description: '',
-      marketType: 'forex',
-      timeframe: 'H1',
-      riskReward: 2,
-      winRate: 50,
-      notes: ''
-    });
+  const handleCreateSetup = () => {
+    setEditingSetup(null);
+    resetForm();
+    setCurrentTab('create');
   };
 
   const handleEditSetup = (setup: TradingSetup) => {
-    setIsEditing(true);
-    setSelectedSetup(setup);
-    setFormData(setup);
+    setEditingSetup(setup);
+    setSetupName(setup.name);
+    setSetupDescription(setup.description || '');
+    setMarketType(setup.marketType);
+    setTimeframe(setup.timeframe);
+    setRiskReward(setup.riskReward.toString());
+    setWinRate(setup.winRate.toString());
+    setNotes(setup.notes || '');
+    setCurrentTab('create');
   };
 
-  const handleSelectSetup = (setup: TradingSetup) => {
-    setSelectedSetup(setup);
-    setIsEditing(false);
-  };
-
-  const handleSaveSetup = async () => {
+  const handleDeleteSetup = async (setupId: string) => {
     try {
-      // This is a placeholder - setupsService needs to be implemented
-      const savedSetup = await saveSetup({
-        ...formData,
-        id: selectedSetup?.id
-      });
-      
-      if (selectedSetup?.id) {
-        // Update existing setup in the list
-        setSetups(prevSetups => prevSetups.map(s => 
-          s.id === savedSetup.id ? savedSetup : s
-        ));
-        toast({
-          title: "Setup Updated",
-          description: `Trading setup "${savedSetup.name}" has been updated.`
-        });
-      } else {
-        // Add new setup to the list
-        setSetups(prevSetups => [...prevSetups, savedSetup]);
-        toast({
-          title: "Setup Created",
-          description: `New trading setup "${savedSetup.name}" has been created.`
-        });
-      }
-      
-      setIsEditing(false);
-      setSelectedSetup(savedSetup);
-    } catch (error) {
-      console.error("Error saving setup:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save trading setup. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteSetup = async (id: string) => {
-    try {
-      // This is a placeholder - setupsService needs to be implemented
-      await deleteSetup(id);
-      
-      setSetups(prevSetups => prevSetups.filter(s => s.id !== id));
-      
-      if (selectedSetup?.id === id) {
-        setSelectedSetup(null);
-      }
-      
+      await deleteSetup(setupId);
+      setSetups(setups.filter(setup => setup.id !== setupId));
       toast({
         title: "Setup Deleted",
-        description: "Trading setup has been deleted."
+        description: "Trading setup was successfully deleted.",
       });
     } catch (error) {
       console.error("Error deleting setup:", error);
       toast({
         title: "Error",
-        description: "Failed to delete trading setup. Please try again.",
-        variant: "destructive"
+        description: "Failed to delete trading setup.",
+        variant: "destructive",
       });
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    if (selectedSetup) {
-      setFormData(selectedSetup);
+  const resetForm = () => {
+    setSetupName('');
+    setSetupDescription('');
+    setMarketType('forex');
+    setTimeframe('H1');
+    setRiskReward('2');
+    setWinRate('60');
+    setNotes('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!setupName) {
+      toast({
+        title: "Validation Error",
+        description: "Setup name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const setupData: TradingSetup = {
+        id: editingSetup?.id,
+        name: setupName,
+        description: setupDescription,
+        marketType,
+        timeframe,
+        riskReward: parseFloat(riskReward),
+        winRate: parseFloat(winRate),
+        notes,
+      };
+
+      const savedSetup = await saveSetup(setupData);
+      
+      if (editingSetup) {
+        setSetups(setups.map(s => s.id === savedSetup.id ? savedSetup : s));
+        toast({
+          title: "Setup Updated",
+          description: "Trading setup was successfully updated.",
+        });
+      } else {
+        setSetups([savedSetup, ...setups]);
+        toast({
+          title: "Setup Created",
+          description: "New trading setup was successfully created.",
+        });
+      }
+      
+      resetForm();
+      setCurrentTab('list');
+    } catch (error) {
+      console.error("Error saving setup:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save trading setup.",
+        variant: "destructive",
+      });
     }
   };
-  
-  const handleBackToJournal = () => {
-    navigate('/journal');
-  };
 
-  const renderSetupsList = () => (
-    <Card className="min-h-[500px]">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Trading Setups</CardTitle>
-        <Button 
-          onClick={handleCreateNew}
-          className="bg-green-500 hover:bg-green-600 text-white"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Setup
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {isLoadingSetups ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent"></div>
-          </div>
-        ) : setups.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">You haven't created any trading setups yet.</p>
-            <Button 
-              onClick={handleCreateNew}
-              className="bg-green-500 hover:bg-green-600 text-white"
-            >
-              Create Your First Setup
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {setups.map(setup => (
-              <div 
-                key={setup.id} 
-                className={`
-                  p-4 rounded-lg border cursor-pointer transition-all
-                  ${selectedSetup?.id === setup.id ? 'border-primary bg-secondary/50' : 'border-border hover:border-primary/50 hover:bg-secondary/20'}
-                `}
-                onClick={() => handleSelectSetup(setup)}
-              >
-                <div className="flex justify-between items-start">
-                  <h3 className="font-medium">{setup.name}</h3>
-                  <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded">
-                    {setup.marketType}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{setup.description}</p>
-                <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                  <span>Win rate: {setup.winRate}%</span>
-                  <span>R:R: {setup.riskReward}:1</span>
-                  <span>TF: {setup.timeframe}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+  const marketCategories: { label: string; value: string }[] = [
+    { label: 'Forex', value: 'forex' },
+    { label: 'Crypto', value: 'crypto' },
+    { label: 'Stocks', value: 'stocks' },
+    { label: 'Indices', value: 'indices' },
+    { label: 'Commodities', value: 'commodities' },
+    { label: 'Metals', value: 'metals' },
+  ];
 
-  const renderSetupDetail = () => (
-    <Card className="min-h-[500px]">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8" 
-            onClick={() => setSelectedSetup(null)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <CardTitle>{selectedSetup?.name}</CardTitle>
+  const timeframes = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN'];
+
+  if (isAuthLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent"></div>
         </div>
-        <Button 
-          onClick={() => handleEditSetup(selectedSetup!)}
-          variant="outline"
-        >
-          Edit
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <div className="flex gap-2 mb-2">
-              <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded">
-                {selectedSetup?.marketType}
-              </span>
-              <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded">
-                {selectedSetup?.timeframe}
-              </span>
-            </div>
-            
-            <h4 className="font-medium text-sm">Description</h4>
-            <p className="text-muted-foreground">{selectedSetup?.description}</p>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium text-sm">Win Rate</h4>
-              <p className="text-xl font-bold">{selectedSetup?.winRate}%</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm">Risk to Reward</h4>
-              <p className="text-xl font-bold">{selectedSetup?.riskReward}:1</p>
-            </div>
-          </div>
-          
-          {selectedSetup?.notes && (
-            <div>
-              <h4 className="font-medium text-sm">Notes</h4>
-              <div className="bg-secondary/30 p-3 rounded mt-1">
-                <p className="text-muted-foreground whitespace-pre-wrap">{selectedSetup.notes}</p>
-              </div>
-            </div>
-          )}
-          
-          {selectedSetup?.imageUrl && (
-            <div>
-              <h4 className="font-medium text-sm">Chart Example</h4>
-              <div className="mt-1 rounded overflow-hidden">
-                <img src={selectedSetup.imageUrl} alt="Chart setup" className="w-full" />
-              </div>
-            </div>
-          )}
-          
-          <div className="pt-4 flex justify-end">
-            <Button 
-              variant="destructive"
-              onClick={() => selectedSetup?.id && handleDeleteSetup(selectedSetup.id)}
-            >
-              Delete Setup
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const renderSetupForm = () => (
-    <Card className="min-h-[500px]">
-      <CardHeader>
-        <CardTitle>{selectedSetup ? 'Edit Trading Setup' : 'Create New Setup'}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSaveSetup(); }}>
-          <div>
-            <Label htmlFor="name">Setup Name</Label>
-            <Input 
-              id="name" 
-              name="name" 
-              value={formData.name} 
-              onChange={handleInputChange} 
-              placeholder="e.g., Break and Retest Strategy" 
-              required 
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="marketType">Market Type</Label>
-              <Select 
-                value={formData.marketType} 
-                onValueChange={(value) => handleSelectChange('marketType', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select market" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="forex">Forex</SelectItem>
-                  <SelectItem value="crypto">Crypto</SelectItem>
-                  <SelectItem value="stocks">Stocks</SelectItem>
-                  <SelectItem value="indices">Indices</SelectItem>
-                  <SelectItem value="commodities">Commodities</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="timeframe">Timeframe</Label>
-              <Select 
-                value={formData.timeframe} 
-                onValueChange={(value) => handleSelectChange('timeframe', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select timeframe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="M1">1 Minute (M1)</SelectItem>
-                  <SelectItem value="M5">5 Minutes (M5)</SelectItem>
-                  <SelectItem value="M15">15 Minutes (M15)</SelectItem>
-                  <SelectItem value="M30">30 Minutes (M30)</SelectItem>
-                  <SelectItem value="H1">1 Hour (H1)</SelectItem>
-                  <SelectItem value="H4">4 Hours (H4)</SelectItem>
-                  <SelectItem value="D1">Daily (D1)</SelectItem>
-                  <SelectItem value="W1">Weekly (W1)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              name="description" 
-              value={formData.description} 
-              onChange={handleInputChange} 
-              placeholder="Describe your trading setup..." 
-              className="h-20"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="winRate">Win Rate (%)</Label>
-              <Input 
-                id="winRate" 
-                name="winRate" 
-                type="number" 
-                min="0" 
-                max="100" 
-                value={formData.winRate} 
-                onChange={handleNumberChange} 
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="riskReward">Risk to Reward Ratio</Label>
-              <Input 
-                id="riskReward" 
-                name="riskReward" 
-                type="number" 
-                step="0.1" 
-                min="0.1" 
-                value={formData.riskReward} 
-                onChange={handleNumberChange} 
-              />
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="notes">Notes and Rules</Label>
-            <Textarea 
-              id="notes" 
-              name="notes" 
-              value={formData.notes} 
-              onChange={handleInputChange} 
-              placeholder="Add trading rules, entry/exit conditions, etc." 
-              className="h-32"
-            />
-          </div>
-          
-          <div className="flex justify-between pt-4">
-            <Button type="button" variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
-              <Save className="mr-2 h-4 w-4" />
-              {selectedSetup ? 'Update Setup' : 'Save Setup'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Trading Setups & Strategies</h1>
-        <Button variant="outline" onClick={handleBackToJournal}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Journal
-        </Button>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Trading Setups</h1>
+          <Button 
+            onClick={() => navigate('/journal')}
+            variant="outline"
+            className="border-primary hover:bg-primary/10"
+          >
+            Back to Journal
+          </Button>
+        </div>
+
+        <Tabs value={currentTab} onValueChange={setCurrentTab}>
+          <div className="flex justify-between items-center mb-4">
+            <TabsList>
+              <TabsTrigger value="list">My Setups</TabsTrigger>
+              <TabsTrigger value="create">{editingSetup ? 'Edit Setup' : 'Create Setup'}</TabsTrigger>
+            </TabsList>
+            
+            <Button 
+              onClick={handleCreateSetup} 
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Setup
+            </Button>
+          </div>
+
+          <TabsContent value="list">
+            {isLoading ? (
+              <div className="flex justify-center p-12">
+                <div className="animate-spin h-8 w-8 border-4 border-primary rounded-full border-t-transparent"></div>
+              </div>
+            ) : setups.length === 0 ? (
+              <div className="text-center py-12 bg-cardDark rounded-lg card-gradient">
+                <h3 className="text-xl font-medium mb-2">No Trading Setups</h3>
+                <p className="text-muted-foreground mb-6">You haven't created any trading setups yet.</p>
+                <Button 
+                  onClick={handleCreateSetup} 
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Your First Setup
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {setups.map((setup) => (
+                  <Card key={setup.id} className="card-gradient">
+                    <CardHeader>
+                      <CardTitle>{setup.name}</CardTitle>
+                      <CardDescription>{setup.marketType} / {setup.timeframe}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm">{setup.description}</p>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium">Win Rate</p>
+                          <p className="text-2xl font-bold">{setup.winRate}%</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Risk:Reward</p>
+                          <p className="text-2xl font-bold">{setup.riskReward}:1</p>
+                        </div>
+                      </div>
+                      
+                      {setup.notes && (
+                        <div>
+                          <p className="text-sm font-medium mb-1">Notes:</p>
+                          <p className="text-sm text-muted-foreground">{setup.notes}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => handleEditSetup(setup)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="icon" className="text-loss hover:text-loss">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Trading Setup?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete the "{setup.name}" trading setup.
+                              This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => setup.id && handleDeleteSetup(setup.id)}
+                              className="bg-red-500 text-white hover:bg-red-600"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="create">
+            <Card className="card-gradient">
+              <CardHeader>
+                <CardTitle>{editingSetup ? 'Edit Trading Setup' : 'Create Trading Setup'}</CardTitle>
+                <CardDescription>
+                  Define your trading strategy to help track performance and maintain consistency.
+                </CardDescription>
+              </CardHeader>
+              <form onSubmit={handleSubmit}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Setup Name</Label>
+                    <Input 
+                      id="name" 
+                      placeholder="e.g., London Breakout" 
+                      value={setupName}
+                      onChange={(e) => setSetupName(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea 
+                      id="description" 
+                      placeholder="Brief description of your trading setup or strategy..."
+                      value={setupDescription}
+                      onChange={(e) => setSetupDescription(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="marketType">Market Type</Label>
+                      <Select 
+                        value={marketType} 
+                        onValueChange={setMarketType}
+                      >
+                        <SelectTrigger id="marketType">
+                          <SelectValue placeholder="Select market" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {marketCategories.map((category) => (
+                            <SelectItem key={category.value} value={category.value}>
+                              {category.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="timeframe">Timeframe</Label>
+                      <Select 
+                        value={timeframe} 
+                        onValueChange={setTimeframe}
+                      >
+                        <SelectTrigger id="timeframe">
+                          <SelectValue placeholder="Select timeframe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeframes.map((tf) => (
+                            <SelectItem key={tf} value={tf}>{tf}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="winRate">Expected Win Rate (%)</Label>
+                      <Input 
+                        id="winRate" 
+                        type="number" 
+                        min="0" 
+                        max="100" 
+                        value={winRate}
+                        onChange={(e) => setWinRate(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="riskReward">Risk-Reward Ratio</Label>
+                      <Input 
+                        id="riskReward" 
+                        type="number" 
+                        min="0.1" 
+                        step="0.1" 
+                        value={riskReward}
+                        onChange={(e) => setRiskReward(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes/Rules</Label>
+                    <Textarea 
+                      id="notes" 
+                      placeholder="Entry/exit rules, indicators, or any other important details..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="flex justify-between">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      resetForm();
+                      setCurrentTab('list');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    {editingSetup ? 'Update Setup' : 'Save Setup'}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-      
-      {isEditing ? (
-        renderSetupForm()
-      ) : selectedSetup ? (
-        renderSetupDetail()
-      ) : (
-        renderSetupsList()
-      )}
     </MainLayout>
   );
 };
