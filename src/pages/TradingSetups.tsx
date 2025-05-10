@@ -24,7 +24,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { TradingSetup, fetchSetups, saveSetup, deleteSetup } from '@/services/setupsService';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { MarketCategory } from '@/types';
+
+// Removed the unused MarketCategory import
 
 const TradingSetups: React.FC = () => {
   const { toast } = useToast();

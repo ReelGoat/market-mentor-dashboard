@@ -1,7 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
-import { MarketCategory } from '@/types';
+
+// Removed the unused MarketCategory import
 
 // Define the TradingSetup interface
 export interface TradingSetup {
