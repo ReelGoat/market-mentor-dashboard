@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -309,7 +308,7 @@ const TradingJournal: React.FC = () => {
               
               <Button 
                 onClick={handleAddTrade} 
-                className="bg-green-500 hover:bg-green-600 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white"
                 disabled={showTradeForm}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />

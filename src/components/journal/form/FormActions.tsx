@@ -14,7 +14,7 @@ const FormActions: React.FC<FormActionsProps> = ({ onCancel, isEditing }) => {
       <Button type="button" variant="outline" onClick={onCancel}>
         Cancel
       </Button>
-      <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
+      <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
         <Save className="mr-2 h-4 w-4" />
         {isEditing ? 'Update Trade' : 'Save Trade'}
       </Button>
