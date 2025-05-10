@@ -1,21 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { Trade, MarketCategory } from '@/types';
-import { Button } from "@/components/ui/button";
-import { X } from 'lucide-react';
 import { TradingSetup } from '@/services/setupsService';
 
-// Import our components
-import DateInput from './form/DateInput';
-import MarketCategorySelect from './form/MarketCategorySelect';
-import SymbolSelect from './form/SymbolSelect';
-import DirectionRadio from './form/DirectionRadio';
-import PriceInputs from './form/PriceInputs';
-import LotSizeInput from './form/LotSizeInput';
-import PnlInput from './form/PnlInput';
-import TradeNotes from './form/TradeNotes';
-import ScreenshotUpload from './form/ScreenshotUpload';
+// Import our refactored components
+import TradeFormHeader from './trade-form/TradeFormHeader';
+import BasicTradeInfo from './trade-form/BasicTradeInfo';
+import SetupSection from './trade-form/SetupSection';
+import TradeDetails from './trade-form/TradeDetails';
+import SizeAndResult from './trade-form/SizeAndResult';
+import AdditionalInfo from './trade-form/AdditionalInfo';
 import FormActions from './form/FormActions';
-import SetupSelect from './form/SetupSelect';
 
 interface TradeFormProps {
   selectedDate: Date;
@@ -167,81 +162,47 @@ const TradeForm: React.FC<TradeFormProps> = ({
 
   return (
     <div className="bg-cardDark rounded-lg p-4 card-gradient">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">
-          {editTrade ? 'Edit Trade' : 'Add New Trade'}
-        </h2>
-        <Button variant="ghost" size="icon" onClick={onCancel}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+      <TradeFormHeader isEditing={!!editTrade} onCancel={onCancel} />
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <DateInput 
-            selectedDate={tradeDateTime} 
-            onTimeChange={handleTimeChange}
-          />
-          <MarketCategorySelect 
-            selectedCategory={selectedCategory} 
-            onCategoryChange={setSelectedCategory} 
-          />
-        </div>
+        <BasicTradeInfo 
+          tradeDateTime={tradeDateTime}
+          selectedCategory={selectedCategory}
+          onTimeChange={handleTimeChange}
+          onCategoryChange={setSelectedCategory}
+        />
 
-        {/* Add Trading Setup Selection */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-300">
-            Trading Setup (Optional)
-          </label>
-          <SetupSelect onSetupSelect={handleSetupSelect} />
-        </div>
+        <SetupSection onSetupSelect={handleSetupSelect} />
         
-        <SymbolSelect 
-          symbol={symbol} 
-          selectedCategory={selectedCategory} 
-          onSymbolChange={setSymbol} 
-          error={errors.symbol} 
+        <TradeDetails
+          symbol={symbol}
+          direction={direction}
+          entryPrice={entryPrice}
+          exitPrice={exitPrice}
+          selectedCategory={selectedCategory}
+          onSymbolChange={setSymbol}
+          onDirectionChange={setDirection}
+          onEntryPriceChange={setEntryPrice}
+          onExitPriceChange={setExitPrice}
+          errors={errors}
         />
         
-        <DirectionRadio 
-          direction={direction} 
-          onDirectionChange={setDirection} 
+        <SizeAndResult
+          lotSize={lotSize}
+          manualPnl={manualPnl}
+          isPnlPositive={isPnlPositive}
+          onLotSizeChange={handleLotSizeChange}
+          onManualPnlChange={handleManualPnlChange}
+          onTogglePnlSign={handleTogglePnlSign}
+          onCalculatePnl={calculatePnl}
+          errors={errors}
         />
         
-        <PriceInputs 
-          entryPrice={entryPrice} 
-          exitPrice={exitPrice} 
-          onEntryPriceChange={setEntryPrice} 
-          onExitPriceChange={setExitPrice} 
-          entryPriceError={errors.entryPrice} 
-          exitPriceError={errors.exitPrice} 
-        />
-        
-        <div className="grid grid-cols-2 gap-4">
-          <LotSizeInput 
-            lotSize={lotSize} 
-            onLotSizeChange={handleLotSizeChange} 
-            error={errors.lotSize} 
-          />
-          
-          <PnlInput 
-            manualPnl={manualPnl} 
-            isPnlPositive={isPnlPositive} 
-            onManualPnlChange={handleManualPnlChange} 
-            onTogglePnlSign={handleTogglePnlSign} 
-            onCalculatePnl={calculatePnl} 
-            error={errors.pnl} 
-          />
-        </div>
-        
-        <TradeNotes 
-          notes={notes} 
-          onNotesChange={setNotes} 
-        />
-        
-        <ScreenshotUpload 
-          screenshot={screenshot} 
-          onScreenshotChange={setScreenshot} 
+        <AdditionalInfo
+          notes={notes}
+          screenshot={screenshot}
+          onNotesChange={setNotes}
+          onScreenshotChange={setScreenshot}
         />
         
         <FormActions 
